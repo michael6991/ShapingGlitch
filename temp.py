@@ -1,5 +1,6 @@
 import random, math
 import matplotlib.pyplot as plt
+import shapes
 
 # import os
 # import sys
@@ -33,8 +34,17 @@ class TestProblem():
 
         
         # initial random glitch length. must be less than SAMPLE_NUM
-        chromo.length = random.randint(20, 100)
+        chromo.length = random.choice(range(100, 250, 10))
+        
+        # get a random low voltage
+        low = random.uniform(individual.MIN_VOLT, individual.MAX_VOLT)
+        # get a random high voltage
+        high = random.uniform(low + random.random(), individual.MAX_VOLT)
+        print("low volt: %f" % low + "   high volt: %f" % high)
+        
+        
         '''
+        
         # insert initial idle voltage, before the glitch shape
         for i in range(0, chromo.timing):
             chromo.waveform[i] = chromo.idle
@@ -48,30 +58,39 @@ class TestProblem():
             chromo.waveform[i] = chromo.idle
         '''
         
+        # choose a random initial shape
+        shape = random.choice(shapes.basic_shapes)
+        
+        chromo.waveform = shapes.choose_shape(shape, 
+                                              chromo.length,
+                                              individual.N,
+                                              high,
+                                              low)
+        
+
+        
         
         return chromo
 
 
 
     def chromosome_str(self, chromosome):
-    	print("Chromosome genes:")
-    	print("\t\t- length %d" % chromosome.length)
-    	print("\t\t- timing %d" % chromosome.timing)
-    	print("\t\t- voltage idle %f" % chromosome.idle)
-    	plt.figure()
-    	plt.plot(individual.time_domain, chromosome.waveform)
-    	plt.grid(True)
-    	plt.show()
+        print("Chromosome genes:")
+        print("\t\t- length %d" % chromosome.length)
+        print("\t\t- timing %d" % chromosome.timing)
+        print("\t\t- voltage idle %f" % chromosome.idle)
+        print("waveform")
+        print(chromosome.waveform)
 
-    	
-    	
-
+        t = [chromosome.waveform[i][0] for i in range(0, len(chromosome.waveform))]
+        v = [chromosome.waveform[i][1] for i in range(0, len(chromosome.waveform))]
+        plt.figure()
+        plt.plot(t, v)
+        plt.grid(True)
+        plt.show()
 
         
         
 test = TestProblem()
 test.chromosome_str(test.create())
-
-
-
 print("done")
