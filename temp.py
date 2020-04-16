@@ -9,7 +9,7 @@ import shapes
 
 import individual#, crossover, mutation, FitnessLoggingGA, ProportionateGA, ElitistGA
 
-class TestProblem():
+class TestProblem(GeneticAlgorithm):
     """Genetic solution to the 0/1 Knapsack Problem."""
 
     def __init__(self):
@@ -48,11 +48,6 @@ class TestProblem():
         # insert initial idle voltage, before the glitch shape
         for i in range(0, chromo.timing):
             chromo.waveform[i] = chromo.idle
-
-        # insert a random voltage point inside the glitch length
-        for i in range(chromo.timing, chromo.timing + chromo.length):
-            chromo.waveform[i] = random.randint(individual.MIN_VAL_VOL, individual.MAX_VAL_VOL)
-
         # pad the rest of the waveform with idle voltage after the glitch shape
         for i in range(chromo.timing + chromo.length, individual.SAMPLE_NUM):
             chromo.waveform[i] = chromo.idle
@@ -61,15 +56,8 @@ class TestProblem():
         # choose a random initial shape
         shape = random.choice(shapes.basic_shapes)
         
-        chromo.waveform = shapes.choose_shape(shape, 
-                                              chromo.length,
-                                              individual.N,
-                                              high,
-                                              low)
-        
-
-        
-        
+        chromo.waveform = shapes.choose_shape(shape, chromo.length,
+                                              individual.N, high, low)        
         return chromo
 
 

@@ -151,17 +151,6 @@ def choose_shape(shape=str, *args):
         Name of a chosen shape
     *args : TYPE
         length, N, high, low
-
-    Raises
-    ------
-    
-        DESCRIPTION.
-
-    Returns
-    -------
-    TYPE
-        DESCRIPTION.
-
     """
     print("Chossen shape: %s" % shape)
     print("N sample points: %d" % args[1])

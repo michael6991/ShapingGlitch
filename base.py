@@ -80,6 +80,7 @@ class GeneticAlgorithm(object):
 
         return scored
 
+
     def solve(self):
         """Run the GA until complete and return the best solution.
 
@@ -101,12 +102,14 @@ class GeneticAlgorithm(object):
 
         return self.best()
 
+
     def is_finished(self):
         """Return true while there have been fewer iterations than the max.
 
         This is the most basic stop condition for a GA.
         """
         return self.iteration >= self.max_iterations
+
 
     def generate(self):
         """Create and assign a new generation as the population."""
@@ -124,17 +127,21 @@ class GeneticAlgorithm(object):
                 child = self.mutate(child)
                 self.next_generation.append(child)
 
+
     def fitness(self, chromosome):
         return self.score(chromosome)
+
 
     def pre_generate(self):
         """Do anything necessary before creating the next generation."""
         pass
 
+
     def post_generate(self):
         """Do anything necessary after creating a generation."""
         self.population = list(self.next_generation)
         self.next_generation = []
+
 
     def best(self):
         """Returns the fittest member in the population of a GA.
@@ -144,9 +151,11 @@ class GeneticAlgorithm(object):
         """
         return self.score_population()[0][0]
 
+
     def mutate(self, chromosome):
         """Return a mutated chromosome."""
         raise NotImplementedError
+
 
     def select(self):
         """Return a chromosome from the current generation.
