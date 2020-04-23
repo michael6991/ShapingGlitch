@@ -29,13 +29,13 @@ def rect_pulse_shape(length, N, high, low):
     """
     
     t_res = length / N
-    shape = [(0, 0) for _ in range(0, N)]  # (time, value)
+    shape = [[0, 0] for _ in range(0, N)]  # (time, value)
     
-    shape[0] = t_res, high
-    shape[N - 1] = t_res * (N), high
+    shape[0] = [t_res, high]
+    shape[N - 1] = [t_res * (N), high]
     
     for n in range(1, N - 1):
-        shape[n] = t_res * (n + 1), low
+        shape[n] = [t_res * (n + 1), low]
     
     return shape
     
@@ -57,7 +57,7 @@ def v_pulse_shape(length, N, high, low):
     """
     
     t_res = length / N    
-    shape = [(0, 0) for _ in range(0, N)]  # (time, value)
+    shape = [[0, 0] for _ in range(0, N)]  # (time, value)
    
     center_point = floor(N / 2.0)
     
@@ -69,28 +69,28 @@ def v_pulse_shape(length, N, high, low):
         a = (high - low) / (0 - center_point)   # negative gradient
         b = high
         for n in range(0, center_point):
-            shape[n] = t_res * (n + 1), (a * n) + b
+            shape[n] = [t_res * (n + 1), (a * n) + b]
         
         # y = a(x - N/2) + b
         a = -1 * a  # same gradient as before but positive 
         b = low
         for n in range(center_point, N - 1):
-            shape[n] = t_res * (n + 1), (a * (n - center_point) + b)
+            shape[n] = [t_res * (n + 1), (a * (n - center_point) + b)]
         
-        shape[-1] = (length, high)  # set the final point to be same as previous
+        shape[-1] = [length, high]  # set the final point to be same as previous
     
     else:
         # y = ax + b
         a = (low - high) / (center_point - 0)   # negative gradient
         b = high
         for n in range(0, center_point):
-            shape[n] = t_res * (n + 1), (a * n) + b
+            shape[n] = [t_res * (n + 1), (a * n) + b]
         
         # y = a(x - N/2) + b
         a = -1 * a  # same gradient as before but positive 
         b = low
         for n in range(center_point, N):
-            shape[n] = t_res * (n + 1), (a * (n - center_point) + b)
+            shape[n] = [t_res * (n + 1), (a * (n - center_point) + b)]
         
         
     return shape
