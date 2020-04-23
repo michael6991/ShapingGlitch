@@ -6,8 +6,8 @@ from individual import Chromosome
 from score_chromosome import score_chromosome
 
 
-class GeneticGlitch(FitnessLoggingGA, PopulationLoggingGA, ElitistGA, ScalingProportionateGA,
-                    FinishWhenSlowGA):
+class GeneticGlitch(FitnessLoggingGA, PopulationLoggingGA, ElitistGA, ScalingProportionateGA  #FinishWhenSlowGA
+                    ):
     def __init__(self, config={}):
         """
         Initializes genetic algorithm to find optimal voltage glitch.
@@ -47,12 +47,31 @@ class GeneticGlitch(FitnessLoggingGA, PopulationLoggingGA, ElitistGA, ScalingPro
             if random.randint(0, 1) == 1:
                 child1.coordinates[locus] = parent2.coordinates[locus]
                 child2.coordinates[locus] = parent1.coordinates[locus]
+        child1.sort_coordinates()
+        child2.sort_coordinates()
         freq_part_crossover = random.random()
         child1.freq = freq_part_crossover * parent1.freq + (1 - freq_part_crossover) * parent2.freq
         child2.freq = freq_part_crossover * parent2.freq + (1 - freq_part_crossover) * parent1.freq
         return [child1, child2]
 
+    def mutate(self, chromosome):
+        """
+        Swap 2 neighboring y values with some probability.
+        :param chromosome:
+        :return:
+        """
+        if random.random() < self.mutation_prob:
+            ind = random.choice(range(chromosome.length - 1))
+            chromosome.coordinates[ind, 1], chromosome.coordinates[ind + 1, 1] = \
+                chromosome.coordinates[ind + 1, 1], chromosome.coordinates[ind, 1]
+        return chromosome
+
+    def post_generate(self):
+        super().post_generate()
+        for chromosome in self.population:
+            chromosome.sort_coordinates()
+
 
 if __name__ == "__main__":
     g = GeneticGlitch()
-    g.seed()
+    g.solve()

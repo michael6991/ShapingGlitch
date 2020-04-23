@@ -22,7 +22,7 @@ from __future__ import division
 
 import math
 
-from . import GeneticAlgorithm
+from base import GeneticAlgorithm
 
 
 class FittestTriggerGA(GeneticAlgorithm):

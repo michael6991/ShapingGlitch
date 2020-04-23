@@ -39,6 +39,9 @@ class Chromosome():
         coordinates[:, 0] = np.sort(coordinates[:, 0])  # sort x values
         return coordinates
 
+    def sort_coordinates(self):
+        self.coordinates = self.coordinates[self.coordinates[:, 0].argsort()]  # sort x values
+
     def interpolate_coordinates(self, interp_method='quadratic'):
         """
         Convert coordinates to array of integers to be sent to AWG.
@@ -46,8 +49,11 @@ class Chromosome():
         :return: x_samples, y_samples
         """
         coordinates_to_interpolate = np.concatenate([[[0, 0]], self.coordinates, [[1, 0]]], axis=0)
-        interp_func = interp1d(coordinates_to_interpolate[:, 0],
-                               coordinates_to_interpolate[:, 1], kind=interp_method)
+        try:
+            interp_func = interp1d(coordinates_to_interpolate[:, 0],
+                                   coordinates_to_interpolate[:, 1], kind=interp_method)
+        except Exception:
+            pass
         x_samples = np.arange(self.num_samples) / (self.num_samples - 1)
         y_samples = interp_func(x_samples)
         return x_samples, y_samples

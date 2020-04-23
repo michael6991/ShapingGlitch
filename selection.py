@@ -126,7 +126,7 @@ class ScalingProportionateGA(ProportionateGA):
         tally = 0
         for tupl in ranked:
             if tupl[1] > 0:
-                share = tupl[1] / shares
+                share = (tupl[1] - worst) / shares
                 tally = tally + share
                 # chromosome, score, share range
                 self.scored.append((tupl[0], tupl[1], tally))
@@ -169,7 +169,7 @@ class ElitistGA(base.GeneticAlgorithm):
     def __init__(self, config={}):
         super(ElitistGA, self).__init__(config)
 
-        pct = self.config.setdefault("elitism_pct", 0.02)
+        pct = self.config.setdefault("elitism_pct", 0.04)
         self.elitism_pct = pct
         self.num_elites = int(math.ceil(pct * self.population_size))
         self.elites = []
