@@ -29,11 +29,12 @@ edge_recombination  No      No    Yes
 """
 from __future__ import division
 from __future__ import absolute_import
-#from builtins import range
+# from builtins import range
 
 
 import random
 import re
+from copy import deepcopy
 
 from . import ero
 from . import base
@@ -210,7 +211,6 @@ def uniform(parent1, parent2):
 
     return [child1, child2]
 
-
 def uniform_bin(parent1, parent2, bits):
     """Return a new chromosome using uniform crossover on a binary string.
 
@@ -342,7 +342,6 @@ class ConfigurableCrossoverGA(base.GeneticAlgorithm):
         "edge_recombination": edge_recombination,
     }
     """A mapping of operator names to functions."""
-
 
     def __init__(self, config={}):
         super(ConfigurableCrossoverGA, self).__init__(config)
