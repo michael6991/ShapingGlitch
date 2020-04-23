@@ -32,7 +32,9 @@ class GeneticGlitch(FitnessLoggingGA, PopulationLoggingGA, ElitistGA, ScalingPro
 
     def crossover(self):
         parent1 = self.select()
-        parent2 = self.select()
+        parent2 = parent1
+        while (parent2.coordinates == parent1.coordinates).any():
+            parent2 = self.select()
         return self.uniform_waveform_crossover(parent1, parent2)
 
     @staticmethod
@@ -62,8 +64,9 @@ class GeneticGlitch(FitnessLoggingGA, PopulationLoggingGA, ElitistGA, ScalingPro
         """
         if random.random() < self.mutation_prob:
             ind = random.choice(range(chromosome.length - 1))
-            chromosome.coordinates[ind, 1], chromosome.coordinates[ind + 1, 1] = \
-                chromosome.coordinates[ind + 1, 1], chromosome.coordinates[ind, 1]
+            tmp_to_swap = chromosome.coordinates[ind, 1]
+            chromosome.coordinates[ind, 1] = chromosome.coordinates[ind + 1, 1]
+            chromosome.coordinates[ind + 1, 1] = tmp_to_swap
         return chromosome
 
     def post_generate(self):
