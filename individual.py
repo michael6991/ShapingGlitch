@@ -1,5 +1,6 @@
 from global_constants_and_functions import *
 
+
 class Chromosome():
     """An individual class that contains the glitch attributes as genes/locuses of a chromosome.
     """
@@ -21,6 +22,12 @@ class Chromosome():
         self.max_dac_int = max_dac_int
         self.min_dac_int = min_dac_int
         self.raw_waveform_int_list = None
+
+    def __str__(self):
+        return "coordinates = {}, freq = {:.4g}".format(np.array2string(self.coordinates, precision=3), self.freq)
+
+    def __repr__(self):
+        return "coordinates = {}, freq = {:.4g}".format(np.array2string(self.coordinates, precision=3), self.freq)
 
     @classmethod
     def calculate_random_coordinates(cls, length=N):
@@ -91,6 +98,7 @@ class Chromosome():
 
 if __name__ == "__main__":
     plt.close('all')
+    plt.close()
     c = Chromosome()
     c.plot_waveform_int()
-    binstring = c.generate_bin_stream_to_AWG()
+    binstring = c.generate_bin_stream_to_awg()

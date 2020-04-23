@@ -36,7 +36,7 @@ Contents
 
 """
 from __future__ import division
-#from builtins import range
+# from builtins import range
 
 import math
 import random
@@ -148,7 +148,7 @@ class TournamentGA(base.GeneticAlgorithm):
         parser = super(TournamentGA, cls).get_parser()
         parser.add_argument("--tournament-size", type=int,
                             help="Number of chromosomes to sample in a"
-                            "tournament.")
+                                 "tournament.")
         return parser
 
     def select(self):
@@ -186,7 +186,7 @@ class ElitistGA(base.GeneticAlgorithm):
             else:
                 sentry = 0
 
-            if (score > sentry or len(self.elites) < self.num_elites):
+            if score > sentry or len(self.elites) < self.num_elites:
 
                 add = (score, chromosome)
                 pos = None
@@ -213,7 +213,7 @@ class ElitistGA(base.GeneticAlgorithm):
         parser = super(ElitistGA, cls).arg_parser()
         parser.add_argument("--elitism", "-e", type=float,
                             help="Percentage of the population to preserve in "
-                            "elitism (0.0-1.0)")
+                                 "elitism (0.0-1.0)")
         return parser
 
     def pre_generate(self):

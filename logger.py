@@ -15,7 +15,7 @@ from __future__ import division
 import logging
 import random
 
-from . import base
+import base
 
 
 # pylint: disable=abstract-method
