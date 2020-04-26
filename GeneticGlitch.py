@@ -62,11 +62,11 @@ class GeneticGlitch(FitnessLoggingGA, PopulationLoggingGA, ElitistGA, ScalingPro
         :param chromosome:
         :return:
         """
-        if random.random() < self.mutation_prob:
-            ind = random.choice(range(chromosome.length - 1))
-            tmp_to_swap = chromosome.coordinates[ind, 1]
-            chromosome.coordinates[ind, 1] = chromosome.coordinates[ind + 1, 1]
-            chromosome.coordinates[ind + 1, 1] = tmp_to_swap
+        # if random.random() < self.mutation_prob:
+        #     ind = random.choice(range(chromosome.length - 1))
+        #     tmp_to_swap = chromosome.coordinates[ind, 1]
+        #     chromosome.coordinates[ind, 1] = chromosome.coordinates[ind + 1, 1]
+        #     chromosome.coordinates[ind + 1, 1] = tmp_to_swap
         return chromosome
 
     def post_generate(self):
