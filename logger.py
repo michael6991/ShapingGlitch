@@ -53,9 +53,9 @@ class FitnessLoggingGA(base.GeneticAlgorithm):
 
     def __init__(self, config={}):
         super(FitnessLoggingGA, self).__init__(config)
+        self.stats_file = self.config.setdefault("stats_file", "stats_file.txt")  # Added by Matan
 
         self.stats_frequency = self.config.setdefault("stats_frequency", 1.0)
-
         self.log_fitness = self.config.setdefault("log_fitness", True)
         self.stats_logger = logging.getLogger("levis.stats")
         self.stats_logger.setLevel(logging.INFO)
@@ -115,6 +115,8 @@ class PopulationLoggingGA(base.GeneticAlgorithm):
 
     def __init__(self, config={}):
         super(PopulationLoggingGA, self).__init__(config)
+        self.population_file = self.config.setdefault("population_file", "population_file.txt")  # Added by Matan
+
         self.log_pop = self.config.setdefault("log_population", False)
         self.population_logger = logging.getLogger("levis.population")
         self.population_logger.setLevel(logging.INFO)

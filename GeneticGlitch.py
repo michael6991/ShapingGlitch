@@ -15,6 +15,7 @@ class GeneticGlitch(FitnessLoggingGA, PopulationLoggingGA, ElitistGA, ScalingPro
         """
         super().__init__(config)
         self.chromosome_length = self.config.setdefault("chromosome_length", N)
+        self.mutation_size = self.config.setdefault("mutation_size", 0.75)
 
     def chromosome_str(self, chromosome):
         return str(chromosome)
@@ -33,8 +34,13 @@ class GeneticGlitch(FitnessLoggingGA, PopulationLoggingGA, ElitistGA, ScalingPro
     def crossover(self):
         parent1 = self.select()
         parent2 = parent1
+        search_counter_max = 10
+        search_counter = 0
         while self.check_chromosomes_equality(parent1, parent2):
             parent2 = self.select()
+            search_counter += 1
+            if search_counter > search_counter_max:
+                parent2 = Chromosome()
         return self.uniform_waveform_crossover(parent1, parent2)
 
     @staticmethod
@@ -51,31 +57,37 @@ class GeneticGlitch(FitnessLoggingGA, PopulationLoggingGA, ElitistGA, ScalingPro
         Returns:
             List[Chromosome]: Two new chromosomes descended from the given parents.
         """
-        child1 = deepcopy(parent1)
-        child2 = deepcopy(parent2)
-        for locus in range(min(parent1.length, parent2.length)):
+        if parent1.length < parent2.length:
+            tup = parent1, parent2
+        else:
+            tup = parent2, parent1
+        child1 = deepcopy(tup[0])
+        child2 = deepcopy(tup[1])
+        indices_from_long_parent = np.sort(np.random.permutation(tup[1].length)[:tup[0].length])
+        for locus in range(tup[0].length):
             if random.randint(0, 1) == 1:
-                child1.coordinates[locus] = parent2.coordinates[locus]
-                child2.coordinates[locus] = parent1.coordinates[locus]
+                child1.coordinates[locus] = tup[1].coordinates[indices_from_long_parent[locus]]
+                child2.coordinates[indices_from_long_parent[locus]] = tup[0].coordinates[locus]
         child1.sort_coordinates()
         child2.sort_coordinates()
         freq_part_crossover = random.random()
-        child1.freq = freq_part_crossover * parent1.freq + (1 - freq_part_crossover) * parent2.freq
-        child2.freq = freq_part_crossover * parent2.freq + (1 - freq_part_crossover) * parent1.freq
+        child1.freq = freq_part_crossover * tup[0].freq + (1 - freq_part_crossover) * tup[1].freq
+        child2.freq = freq_part_crossover * tup[1].freq + (1 - freq_part_crossover) * tup[0].freq
         return [child1, child2]
 
     def mutate(self, chromosome):
         """
-        Swap 2 neighboring y values with some probability.
+        with probability mutation_prob:
+        1) Change a random y value by a random value
+        2) add a random point
         Also always change id.
         :param chromosome:
         :return:
         """
         if random.random() < self.mutation_prob:
-            ind = random.choice(range(chromosome.length - 1))
-            tmp_to_swap = chromosome.coordinates[ind, 1]
-            chromosome.coordinates[ind, 1] = chromosome.coordinates[ind + 1, 1]
-            chromosome.coordinates[ind + 1, 1] = tmp_to_swap
+            ind = random.choice(range(chromosome.length))
+            amount_to_change = (- 0.5 + random.random()) * self.mutation_size
+            chromosome.coordinates[ind, 1] += amount_to_change
         chromosome.id = uuid.uuid4()
         return chromosome
 
@@ -88,11 +100,19 @@ class GeneticGlitch(FitnessLoggingGA, PopulationLoggingGA, ElitistGA, ScalingPro
                 if chromosome1.id != chromosome2.id and \
                         chromosome1.length == chromosome2.length and \
                         self.check_chromosomes_equality(chromosome1, chromosome2):
-                    chromosome2.coordinates = chromosome2.calculate_random_coordinates(self.chromosome_length)
-                    chromosome1.freq = np.mean([chromosome1.freq, chromosome2.freq])
+                    chromosome2.add_noise()  # is we want to keep attributes of good solutions that were duplicated
 
 
 if __name__ == "__main__":
+    from score_chromosome import v_pulse_shape
+
     g = GeneticGlitch()
     solution = g.solve()
-    solution.plot_waveform_uncut()
+    # plot
+    x_samples, y_samples = solution.interpolate_coordinates()
+    fig, ax = plt.subplots()
+    ax.plot(np.arange(SAMPLE_NUM) / (SAMPLE_NUM - 1), v_pulse_shape(0.6, 0.6, 0.6), c='g')
+    ax.plot(x_samples, y_samples, c='b')
+    ax.scatter(solution.coordinates[:, 0], solution.coordinates[:, 1], c='r')
+    ax.legend(['Target waveform', 'Result waveform', 'Chromosome coordinates'])
+    ax.grid()

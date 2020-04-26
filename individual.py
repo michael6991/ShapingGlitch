@@ -45,13 +45,23 @@ class Chromosome():
         return coordinates
 
     def sort_coordinates(self):
+        """
+        Sort coordinates with ascending x values, remove duplicates and add other random points instead.
+        :return:
+        """
         self.coordinates = self.coordinates[self.coordinates[:, 0].argsort()]  # sort x values
         indices_to_remove = np.diff(self.coordinates[:, 0], axis=0) == 0
         if indices_to_remove.any():
             self.coordinates = np.delete(self.coordinates, np.argwhere(indices_to_remove), axis=0)
-            self.length = np.sum(np.logical_not(indices_to_remove))
-        if self.coordinates.size == 0:  # it has been crossovered to death
-            self.coordinates = self.calculate_random_coordinates(self.length)
+            # self.length = np.sum(np.logical_not(indices_to_remove)) + 1
+            # add random points
+            random_point = np.random.random([np.sum(indices_to_remove), 2])
+            random_point[:, 1] = -1 + 2 * random_point[:, 1]
+            self.coordinates = np.concatenate([self.coordinates, random_point], axis=0)
+            # chromosome.length += 1
+            self.coordinates = self.coordinates[self.coordinates[:, 0].argsort()]  # sort x values again
+        # if self.coordinates.size == 0:  # it has been crossovered to death
+        #     self.coordinates = self.calculate_random_coordinates(self.length)
 
 
     def interpolate_coordinates(self, interp_method='quadratic'):
@@ -109,6 +119,14 @@ class Chromosome():
         """
         self.calc_raw_waveform_int()
         return b''.join([convert_int_to_comp2_ascii(x, 2) for x in self.raw_waveform_int_list])
+
+    def add_noise(self):
+        """
+        add noise to coordinates.
+        :return:
+        """
+        self.coordinates[:, 1] += np.random.randn(self.length) * 0.25
+        self.freq += np.random.randn() * MIN_FREQ
 
 
 if __name__ == "__main__":
