@@ -6,7 +6,7 @@ from individual import Chromosome
 from score_chromosome import score_chromosome
 
 
-class GeneticGlitch(FitnessLoggingGA, PopulationLoggingGA, ElitistGA, ScalingProportionateGA  #FinishWhenSlowGA
+class GeneticGlitch(FitnessLoggingGA, PopulationLoggingGA, ElitistGA, ScalingProportionateGA  # FinishWhenSlowGA
                     ):
     def __init__(self, config={}):
         """
@@ -33,9 +33,17 @@ class GeneticGlitch(FitnessLoggingGA, PopulationLoggingGA, ElitistGA, ScalingPro
     def crossover(self):
         parent1 = self.select()
         parent2 = parent1
-        while (parent2.coordinates == parent1.coordinates).any():
+        while self.check_chromosomes_equality(parent1, parent2):
             parent2 = self.select()
         return self.uniform_waveform_crossover(parent1, parent2)
+
+    @staticmethod
+    def check_chromosomes_equality(parent1, parent2):
+        if parent1.length < parent2.length:
+            tup = parent1, parent2
+        else:
+            tup = parent2, parent1
+        return np.isin(tup[0].coordinates, tup[1].coordinates).all()
 
     @staticmethod
     def uniform_waveform_crossover(parent1, parent2):
@@ -45,7 +53,7 @@ class GeneticGlitch(FitnessLoggingGA, PopulationLoggingGA, ElitistGA, ScalingPro
         """
         child1 = deepcopy(parent1)
         child2 = deepcopy(parent2)
-        for locus in range(parent1.length):
+        for locus in range(min(parent1.length, parent2.length)):
             if random.randint(0, 1) == 1:
                 child1.coordinates[locus] = parent2.coordinates[locus]
                 child2.coordinates[locus] = parent1.coordinates[locus]
@@ -59,22 +67,32 @@ class GeneticGlitch(FitnessLoggingGA, PopulationLoggingGA, ElitistGA, ScalingPro
     def mutate(self, chromosome):
         """
         Swap 2 neighboring y values with some probability.
+        Also always change id.
         :param chromosome:
         :return:
         """
-        # if random.random() < self.mutation_prob:
-        #     ind = random.choice(range(chromosome.length - 1))
-        #     tmp_to_swap = chromosome.coordinates[ind, 1]
-        #     chromosome.coordinates[ind, 1] = chromosome.coordinates[ind + 1, 1]
-        #     chromosome.coordinates[ind + 1, 1] = tmp_to_swap
+        if random.random() < self.mutation_prob:
+            ind = random.choice(range(chromosome.length - 1))
+            tmp_to_swap = chromosome.coordinates[ind, 1]
+            chromosome.coordinates[ind, 1] = chromosome.coordinates[ind + 1, 1]
+            chromosome.coordinates[ind + 1, 1] = tmp_to_swap
+        chromosome.id = uuid.uuid4()
         return chromosome
 
-    def post_generate(self):
-        super().post_generate()
+    def pre_generate(self):
+        super().pre_generate()
         for chromosome in self.population:
             chromosome.sort_coordinates()
+        for chromosome1 in self.population:
+            for chromosome2 in self.population:
+                if chromosome1.id != chromosome2.id and \
+                        chromosome1.length == chromosome2.length and \
+                        self.check_chromosomes_equality(chromosome1, chromosome2):
+                    chromosome2.coordinates = chromosome2.calculate_random_coordinates(self.chromosome_length)
+                    chromosome1.freq = np.mean([chromosome1.freq, chromosome2.freq])
 
 
 if __name__ == "__main__":
     g = GeneticGlitch()
-    g.solve()
+    solution = g.solve()
+    solution.plot_waveform_uncut()

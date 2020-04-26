@@ -92,7 +92,7 @@ class GeneticAlgorithm(object):
                 self.pre_generate()
                 self.generate()
                 self.post_generate()
-
+                print("Iteration {} Finished".format(self.iteration))
         except KeyboardInterrupt:
             print("\nKeyboardInterrupt\n")
 

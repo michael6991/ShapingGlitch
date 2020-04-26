@@ -22,12 +22,17 @@ class Chromosome():
         self.max_dac_int = max_dac_int
         self.min_dac_int = min_dac_int
         self.raw_waveform_int_list = None
+        self.id = uuid.uuid4()
 
     def __str__(self):
-        return "coordinates = {}, freq = {:.4g}".format(np.array2string(self.coordinates, precision=3), self.freq)
+        return "id = {}, coordinates = {}, freq = {:.4g}".format(self.id,
+                                                                 np.array2string(self.coordinates, precision=3),
+                                                                 self.freq)
 
     def __repr__(self):
-        return "coordinates = {}, freq = {:.4g}".format(np.array2string(self.coordinates, precision=3), self.freq)
+        return "id = {}, coordinates = {}, freq = {:.4g}".format(self.id,
+                                                               np.array2string(self.coordinates, precision=3),
+                                                               self.freq)
 
     @classmethod
     def calculate_random_coordinates(cls, length=N):
@@ -41,6 +46,13 @@ class Chromosome():
 
     def sort_coordinates(self):
         self.coordinates = self.coordinates[self.coordinates[:, 0].argsort()]  # sort x values
+        indices_to_remove = np.diff(self.coordinates[:, 0], axis=0) == 0
+        if indices_to_remove.any():
+            self.coordinates = np.delete(self.coordinates, np.argwhere(indices_to_remove), axis=0)
+            self.length = np.sum(np.logical_not(indices_to_remove))
+        if self.coordinates.size == 0:  # it has been crossovered to death
+            self.coordinates = self.calculate_random_coordinates(self.length)
+
 
     def interpolate_coordinates(self, interp_method='quadratic'):
         """
@@ -49,11 +61,8 @@ class Chromosome():
         :return: x_samples, y_samples
         """
         coordinates_to_interpolate = np.concatenate([[[0, 0]], self.coordinates, [[1, 0]]], axis=0)
-        try:
-            interp_func = interp1d(coordinates_to_interpolate[:, 0],
-                                   coordinates_to_interpolate[:, 1], kind=interp_method)
-        except Exception:
-            pass
+        interp_func = interp1d(coordinates_to_interpolate[:, 0],
+                               coordinates_to_interpolate[:, 1], kind=interp_method)
         x_samples = np.arange(self.num_samples) / (self.num_samples - 1)
         y_samples = interp_func(x_samples)
         return x_samples, y_samples

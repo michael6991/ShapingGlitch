@@ -4,6 +4,7 @@ from scipy.interpolate import interp1d
 import matplotlib.pyplot as plt
 from copy import deepcopy
 import random
+import uuid
 
 # 65546 (64K) memory points or 16384 points. also represents the discrete time points:
 SAMPLE_NUM = 16384
