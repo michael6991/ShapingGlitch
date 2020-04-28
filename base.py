@@ -103,6 +103,11 @@ class GeneticAlgorithm(object):
 
         This is the most basic stop condition for a GA.
         """
+
+        # should we add additional condition ?
+        # may be after a reallife experiment, we would decide.
+        # if self.best() >= CONVERGANCE_FITNESS_SCORE:
+
         return self.iteration >= self.max_iterations
 
     def generate(self):

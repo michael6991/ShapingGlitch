@@ -32,9 +32,16 @@ class GeneticGlitch(FitnessLoggingGA, PopulationLoggingGA, ElitistGA, ScalingPro
         return score_chromosome(chromosome)
 
     def crossover(self):
+        """
+        I'm not quite sure I understand what's going in here.
+        Why 10 though ?? Is it harry potter's favorite integer ?
+        Please explain. Sincerely Mike.
+        """
         parent1 = self.select()
         parent2 = parent1
-        search_counter_max = 10
+        search_counter_max = 10     # may be change to:  counter_max = population_size / 4.
+                                    # at least it has a parameter involved, instead of a plain number.
+                                    # i don't know...
         search_counter = 0
         while self.check_chromosomes_equality(parent1, parent2):
             parent2 = self.select()
@@ -45,6 +52,10 @@ class GeneticGlitch(FitnessLoggingGA, PopulationLoggingGA, ElitistGA, ScalingPro
 
     @staticmethod
     def check_chromosomes_equality(parent1, parent2):
+        """
+        Check whether two chromosomes have equal waveform coordinates
+        :return:True or False
+        """
         if parent1.length < parent2.length:
             tup = parent1, parent2
         else:
@@ -54,6 +65,22 @@ class GeneticGlitch(FitnessLoggingGA, PopulationLoggingGA, ElitistGA, ScalingPro
     @staticmethod
     def uniform_waveform_crossover(parent1, parent2):
         """ Perform uniform crossover on out waveform chromosomes.
+        
+        the code is quite messy. would be great if additional description
+        will be added here.
+
+        note:
+            The difference between shallow and deep copying is only relevant for
+            compound objects (objects that contain other objects, like lists or
+            class instances).
+    
+            -   A shallow copy constructs a new compound object and then (to the
+                extent possible) inserts *the same objects* into it that the
+                original contains.
+    
+            -   A deep copy constructs a new compound object and then, recursively,
+                inserts *copies* into it of the objects found in the original.
+
         Returns:
             List[Chromosome]: Two new chromosomes descended from the given parents.
         """
@@ -84,14 +111,25 @@ class GeneticGlitch(FitnessLoggingGA, PopulationLoggingGA, ElitistGA, ScalingPro
         :param chromosome:
         :return:
         """
-        if random.random() < self.mutation_prob:
+        if random.random() < self.mutation_prob:            #  did you mean:  random() >= mutation_prob  ???
             ind = random.choice(range(chromosome.length))
             amount_to_change = (- 0.5 + random.random()) * self.mutation_size
             chromosome.coordinates[ind, 1] += amount_to_change
-        chromosome.id = uuid.uuid4()
+        chromosome.id = uuid.uuid4()                        #  why ???, the initial id is unique already...
         return chromosome
 
     def pre_generate(self):
+        """
+        Before applying the GA selection, crossover, and mutation
+        methods on a certain generation, make sure that every chromosome
+        is unique and differs from others - by adding random noise to the
+        the attributes of the "similar" chromosome.
+        This function preserves "better" chromosomes with good solution attributes
+        and expands the solution space , so that GA won't converge around
+        a ot optimal solution.
+
+        Will overwrite pre_generate method in base class.
+        """
         super().pre_generate()
         for chromosome in self.population:
             chromosome.sort_coordinates()
@@ -100,7 +138,7 @@ class GeneticGlitch(FitnessLoggingGA, PopulationLoggingGA, ElitistGA, ScalingPro
                 if chromosome1.id != chromosome2.id and \
                         chromosome1.length == chromosome2.length and \
                         self.check_chromosomes_equality(chromosome1, chromosome2):
-                    chromosome2.add_noise()  # is we want to keep attributes of good solutions that were duplicated
+                    chromosome2.add_noise()  # if we want to keep attributes of good solutions that were duplicated
 
 
 if __name__ == "__main__":
@@ -116,3 +154,5 @@ if __name__ == "__main__":
     ax.scatter(solution.coordinates[:, 0], solution.coordinates[:, 1], c='r')
     ax.legend(['Target waveform', 'Result waveform', 'Chromosome coordinates'])
     ax.grid()
+    plt.show()
+
