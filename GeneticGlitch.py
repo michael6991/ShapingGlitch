@@ -111,7 +111,7 @@ class GeneticGlitch(FitnessLoggingGA, PopulationLoggingGA, ElitistGA, ScalingPro
         :param chromosome:
         :return:
         """
-        if random.random() < self.mutation_prob:            #  did you mean:  random() >= mutation_prob  ???
+        if random.random() < self.mutation_prob:
             ind = random.choice(range(chromosome.length))
             amount_to_change = (- 0.5 + random.random()) * self.mutation_size
             chromosome.coordinates[ind, 1] += amount_to_change
