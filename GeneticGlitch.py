@@ -33,9 +33,6 @@ class GeneticGlitch(FitnessLoggingGA, PopulationLoggingGA, ElitistGA, ScalingPro
 
     def crossover(self):
         """
-        I'm not quite sure I understand what's going in here.
-        Why 10 though ?? Is it harry potter's favorite integer ?
-        Please explain. Sincerely Mike.
         """
         parent1 = self.select()
         parent2 = parent1
