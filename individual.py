@@ -47,13 +47,15 @@ class Chromosome():
     def sort_coordinates(self):
         """
         Sort coordinates with ascending x values.
-        Raises RuntimeError if duplicates in x coordinates found.
+        Remove duplicates in x coordinates if found, and add random points instead.
         :return:
         """
         self.coordinates = self.coordinates[self.coordinates[:, 0].argsort()]  # sort x values
-        indices_to_remove = np.diff(self.coordinates[:, 0], axis=0) == 0
-        if indices_to_remove.any():
-            raise RuntimeError("Duplicates of x coordinates found in chromosome.")
+        indices_to_remove = np.argwhere(np.diff(self.coordinates[:, 0], axis=0) == 0)
+        if indices_to_remove.size > 0:
+            self.remove_points(indices_to_remove)
+            # add random points instead of deleted ones
+            self.add_random_points(indices_to_remove.size)
 
     def interpolate_coordinates(self, interp_method='quadratic'):
         """
@@ -133,26 +135,27 @@ class Chromosome():
         """
         return (self.coordinates[:, 0] == point[0]).any()
 
-    def remove_point(self, ind):
+    def remove_points(self, indices_to_remove):
         """
-        remove point from chromosome.
+        remove points from chromosome.
         :param ind:
         :return:
         """
-        if self.length > 1:
-            self.coordinates = np.concatenate([self.coordinates[:ind], self.coordinates[ind + 1:]], axis=0)
-            self.length -= 1
+        indices_to_remove = np.array(indices_to_remove)
+        if self.length > len(indices_to_remove):
+            self.coordinates = np.delete(self.coordinates, indices_to_remove, axis=0)
+            self.length -= len(indices_to_remove)
 
-    def add_random_point(self):
+    def add_random_points(self, num_of_points):
         """
         add random point to chromosome.
         :return:
         """
-        random_point = np.random.random([1, 2])
-        random_point[0, 1] = -1 + 2 * random_point[0, 1]
-        self.coordinates = np.concatenate([self.coordinates, random_point], axis=0)
-        self.length += 1
-        self.sort_coordinates()
+        random_points = np.random.random([num_of_points, 2])
+        random_points[:, 1] = -1 + 2 * random_points[:, 1]
+        self.coordinates = np.concatenate([self.coordinates, random_points], axis=0)
+        self.length += num_of_points
+        self.coordinates = self.coordinates[self.coordinates[:, 0].argsort()]  # sort x values
 
     def generate_new_id(self):
         self.id = uuid.uuid4()

@@ -93,10 +93,8 @@ class GeneticGlitch(ElitistGA, ScalingProportionateGA, FinishWhenSlowGA, BestChr
         # Perform uniform crossover with 50% chance, without adding points that are already in a chromosome:
         for locus in range(tup[0].length):
             if random.randint(0, 1) == 1:
-                if not child1.is_x_in_chromosome(tup[1].coordinates[indices_from_long_parent[locus]]):
-                    child1.coordinates[locus] = tup[1].coordinates[indices_from_long_parent[locus]]
-                if not child2.is_x_in_chromosome(tup[0].coordinates[locus]):
-                    child2.coordinates[indices_from_long_parent[locus]] = tup[0].coordinates[locus]
+                child1.coordinates[locus] = tup[1].coordinates[indices_from_long_parent[locus]]
+                child2.coordinates[indices_from_long_parent[locus]] = tup[0].coordinates[locus]
         # Sort coordinates in case they got messed up
         child1.sort_coordinates()
         child2.sort_coordinates()
@@ -133,10 +131,10 @@ class GeneticGlitch(ElitistGA, ScalingProportionateGA, FinishWhenSlowGA, BestChr
             # remove random point
             if random.randint(0, 1) == 0:
                 ind = random.choice(range(chromosome.length))
-                chromosome.remove_point(ind)
+                chromosome.remove_points([ind])
             # add random point
             else:
-                chromosome.add_random_point()
+                chromosome.add_random_points(1)
         # frequency mutation
         if random.random() < self.mutation_freq_prob:
             chromosome.freq += self.mutation_freq_size * np.random.randn()
