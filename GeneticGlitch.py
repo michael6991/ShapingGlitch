@@ -18,9 +18,11 @@ class GeneticGlitch(ElitistGA, ScalingProportionateGA, FinishWhenSlowGA, BestChr
         self.mutation_y_prob = self.config.setdefault("mutation_y_prob", 0.9)
         self.mutation_y_size = self.config.setdefault("mutation_y_size", 0.3)
         self.mutation_reorder_prob = self.config.setdefault("mutation_reorder_prob", 0.05)
-        self.mutation_freq_prob = self.config.setdefault("mutation_freq_prob", 0.2)
+        self.mutation_freq_prob = self.config.setdefault("mutation_freq_prob", 0.05)
         self.mutation_freq_size = self.config.setdefault("mutation_freq_size", MIN_FREQ)
         self.mutation_add_or_remove_prob = self.config.setdefault("mutation_add_or_remove_prob", 0.05)
+        self.mutation_random_parent_crossover_prob = self.config.setdefault("mutation_random_parent_crossover_prob",
+                                                                            0.05)
 
     def chromosome_str(self, chromosome):
         return str(chromosome)
@@ -36,6 +38,25 @@ class GeneticGlitch(ElitistGA, ScalingProportionateGA, FinishWhenSlowGA, BestChr
         """
         return score_chromosome(chromosome)
 
+    def generate(self):
+        """Create and assign a new generation as the population."""
+        while len(self.next_generation) < self.population_size - self.replace_worst_num:
+            if self.random.random() < self.crossover_prob:
+                children = self.crossover()
+            else:
+                children = [self.select() for _ in
+                            range(0, self.num_cx_children)]
+
+            for child in children:
+                if len(self.next_generation) >= self.population_size - self.replace_worst_num:
+                    break
+
+                child = self.mutate(child)
+                self.next_generation.append(child)
+
+        for _ in range(self.replace_worst_num):
+            self.next_generation.append(self.create())
+
     def crossover(self):
         """
         Select 2 distinct parents to perform crossover on.
@@ -43,26 +64,14 @@ class GeneticGlitch(ElitistGA, ScalingProportionateGA, FinishWhenSlowGA, BestChr
         """
         parent1 = self.select()
         parent2 = parent1
-        search_counter_max = np.ceil(self.population_size / 4)
+        search_counter_max = np.ceil(self.population_size / 2)
         search_counter = 0
-        while self.check_chromosomes_equality(parent1, parent2):
+        while parent1.id == parent2.id:
             parent2 = self.select()
             search_counter += 1
             if search_counter > search_counter_max:
-                parent2 = Chromosome(length=self.chromosome_length_initial)
+                parent2 = self.create()
         return self.uniform_waveform_crossover(parent1, parent2)
-
-    @staticmethod
-    def check_chromosomes_equality(parent1, parent2):
-        """
-        Check whether two chromosomes have equal waveform coordinates
-        :return:True or False
-        """
-        if parent1.length < parent2.length:
-            tup = parent1, parent2
-        else:
-            tup = parent2, parent1
-        return np.isin(tup[0].coordinates, tup[1].coordinates).all()
 
     @staticmethod
     def uniform_waveform_crossover(parent1, parent2):
@@ -104,7 +113,7 @@ class GeneticGlitch(ElitistGA, ScalingProportionateGA, FinishWhenSlowGA, BestChr
         2) swapping 2 points'  y values.
         3) removing or adding random point
         4) adding noise to frequency
-        If a mutation occured, ID is changed.
+        Also changes ID.
         :param chromosome:
         :return:
         """
@@ -113,14 +122,12 @@ class GeneticGlitch(ElitistGA, ScalingProportionateGA, FinishWhenSlowGA, BestChr
             ind = random.choice(range(chromosome.length))
             amount_to_change = np.random.randn() * self.mutation_y_size
             chromosome.coordinates[ind, 1] += amount_to_change
-            chromosome.generate_new_id()
         # swap mutation
-        if random.random() < self.mutation_reorder_prob:
+        if random.random() < self.mutation_reorder_prob and chromosome.length > 1:
             ind = random.choice(range(chromosome.length - 1))
             tmp_to_swap = chromosome.coordinates[ind, 1]
             chromosome.coordinates[ind, 1] = chromosome.coordinates[ind + 1, 1]
             chromosome.coordinates[ind + 1, 1] = tmp_to_swap
-            chromosome.generate_new_id()
         # remove or add point mutation
         if random.random() < self.mutation_add_or_remove_prob:
             # remove random point
@@ -130,32 +137,35 @@ class GeneticGlitch(ElitistGA, ScalingProportionateGA, FinishWhenSlowGA, BestChr
             # add random point
             else:
                 chromosome.add_random_point()
-            chromosome.generate_new_id()
         # frequency mutation
         if random.random() < self.mutation_freq_prob:
             chromosome.freq += self.mutation_freq_size * np.random.randn()
-            chromosome.generate_new_id()
+        # random parent crossover mutation
+        if random.random() < self.mutation_random_parent_crossover_prob:
+            random_parent = self.create()
+            children = self.uniform_waveform_crossover(chromosome, random_parent)
+            chromosome = children[random.randint(0, 1)]
+        chromosome.generate_new_id()
         return chromosome
 
-    # def pre_generate(self):
-    #     """
-    #     Before applying the GA selection, crossover, and mutation
-    #     methods on a certain generation, make sure that every chromosome
-    #     is unique and differs from others - by adding random noise to the
-    #     the attributes of the "similar" chromosome.
-    #     This function preserves "better" chromosomes with good solution attributes
-    #     and expands the solution space , so that GA won't converge around
-    #     a suboptimal solution.
-    #     """
-    #     super().pre_generate()
-    #     for chromosome in self.population:
-    #         chromosome.sort_coordinates()
-    #     for chromosome1 in self.population:
-    #         for chromosome2 in self.population:
-    #             if chromosome1.id != chromosome2.id and \
-    #                     chromosome1.length == chromosome2.length and \
-    #                     self.check_chromosomes_equality(chromosome1, chromosome2):
-    #                 chromosome2.add_noise()  # if we want to keep attributes of good solutions that were duplicated
+    def pre_generate(self):
+        """
+        Before applying the GA selection, crossover, and mutation
+        methods on a certain generation, make sure that every chromosome
+        is unique and differs from others - by adding random noise to the
+        the attributes of the "similar" chromosome.
+        This function preserves "better" chromosomes with good solution attributes
+        and expands the solution space , so that the GA won't converge around
+        a suboptimal solution.
+        """
+        super().pre_generate()
+        for chromosome1 in self.population:
+            for chromosome2 in self.population:
+                # make sure they aren't the same chromosome chosen twice.
+                if chromosome1.id != chromosome2.id and \
+                        chromosome1.length == chromosome2.length and \
+                        (chromosome1.coordinates == chromosome2.coordinates).all():
+                    chromosome2.add_noise()  # if we want to keep attributes of good solutions that were duplicated
 
     def best(self):
         """

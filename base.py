@@ -44,7 +44,7 @@ class GeneticAlgorithm(object):
         self.population_size = self.config.setdefault("population_size", 50)
         self.crossover_prob = self.config.setdefault("crossover_prob", 0.80)
         self.max_iterations = self.config.setdefault("max_iterations", 100)
-        self.remove_worst_size = self.config.setdefault("remove_worst_size", 3)
+        self.replace_worst_num = self.config.setdefault("replace_worst_num", 3)
         if self.max_iterations <= 0:
             self.max_iterations = 1
         self.ranked = None
@@ -76,7 +76,7 @@ class GeneticAlgorithm(object):
         self.ranked = [(member, self.fitness(member)) for member in self.population]
         self.ranked.sort(key=lambda n: n[1])  # sort only according to the fitness score
         self.ranked.reverse()  # make the member with highest score as first in list
-        self.ranked = self.ranked[:-self.remove_worst_size]
+        self.ranked = self.ranked[:-self.replace_worst_num]
 
     def solve(self):
         """Run the GA until complete and return the best solution.

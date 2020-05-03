@@ -116,7 +116,7 @@ class Chromosome():
         add noise to coordinates.
         :return:
         """
-        self.coordinates[:, 1] += np.random.randn(self.length) * 0.25
+        self.coordinates[:, 1] += np.random.randn(self.length) * 0.1
         self.freq += np.random.randn() * MIN_FREQ
 
     def is_point_in_chromosome(self, point) -> bool:
