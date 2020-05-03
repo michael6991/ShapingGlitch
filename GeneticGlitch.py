@@ -76,7 +76,9 @@ class GeneticGlitch(ElitistGA, ScalingProportionateGA, FinishWhenSlowGA, BestChr
     @staticmethod
     def uniform_waveform_crossover(parent1, parent2):
         """ Perform uniform crossover on two waveform chromosomes.
-
+        Note that crossover can create multiple points with the same x coordinates
+         (due to indices being crossovered to another chromosome, changing index
+        and then being crossovered back), and those duplicates are handled in sort_coordinates().
         Returns:
             List[Chromosome]: Two new chromosomes descended from the given parents.
         """
