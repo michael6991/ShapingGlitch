@@ -89,16 +89,20 @@ class FinishWhenSlowGA(FittestInGenerationGA):
 
     def __init__(self, config={}):
         super(FinishWhenSlowGA, self).__init__(config)
-        self.threshold = self.config.setdefault("threshold", 0.0001)
+        self.threshold = self.config.setdefault("threshold", 0.001)
         self.lookback = self.config.setdefault("lookback", 10)
 
     def is_finished(self):
+        """
+        Checks whether progress has been made in the last iterations, and stops if gain didn't exceed certain threshold.
+        :return:
+        """
         exceeded_duration = self.iteration >= self.max_iterations
 
         if len(self.best_scores) > self.lookback:
             first = np.array(self.best_scores[-self.lookback: -1])
             last = self.best_scores[-1]
-            gain = (last - first) / first
+            gain = (last - first)  # can also be divided by "first" to get gain as a ratio and not definite value
 
             return (gain <= self.threshold).all() or exceeded_duration
 
