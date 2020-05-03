@@ -14,14 +14,18 @@ class GeneticGlitch(ElitistGA, ScalingProportionateGA, FinishWhenSlowGA, BestChr
         :param config: configuration dictionary
         """
         super().__init__(config)
-        self.chromosome_length = self.config.setdefault("chromosome_length", N)
-        self.mutation_size = self.config.setdefault("mutation_size", 0.75)
+        self.chromosome_length_initial = self.config.setdefault("chromosome_length", N)
+        self.mutation_y_prob = self.config.setdefault("mutation_y_prob", 0.8)
+        self.mutation_y_size = self.config.setdefault("mutation_y_size", 0.5)
+        self.mutation_reorder_prob = self.config.setdefault("mutation_reorder_prob", 0.1)
+        self.mutation_freq_prob = self.config.setdefault("mutation_freq_prob", 0.2)
+        self.mutation_freq_size = self.config.setdefault("mutation_freq_size", 0.2)
 
     def chromosome_str(self, chromosome):
         return str(chromosome)
 
     def create(self):
-        return Chromosome(length=self.chromosome_length)
+        return Chromosome(length=self.chromosome_length_initial)
 
     def score(self, chromosome):
         """This should send a "score" command to the arduino, that runs a several amount of glitches of the current
@@ -36,15 +40,13 @@ class GeneticGlitch(ElitistGA, ScalingProportionateGA, FinishWhenSlowGA, BestChr
         """
         parent1 = self.select()
         parent2 = parent1
-        search_counter_max = 10     # may be change to:  counter_max = population_size / 4.
-                                    # at least it has a parameter involved, instead of a plain number.
-                                    # i don't know...
+        search_counter_max = np.ceil(self.population_size / 4)
         search_counter = 0
         while self.check_chromosomes_equality(parent1, parent2):
             parent2 = self.select()
             search_counter += 1
             if search_counter > search_counter_max:
-                parent2 = Chromosome()
+                parent2 = Chromosome(length=self.chromosome_length_initial)
         return self.uniform_waveform_crossover(parent1, parent2)
 
     @staticmethod
@@ -61,39 +63,30 @@ class GeneticGlitch(ElitistGA, ScalingProportionateGA, FinishWhenSlowGA, BestChr
 
     @staticmethod
     def uniform_waveform_crossover(parent1, parent2):
-        """ Perform uniform crossover on out waveform chromosomes.
-        
-        the code is quite messy. would be great if additional description
-        will be added here.
-
-        note:
-            The difference between shallow and deep copying is only relevant for
-            compound objects (objects that contain other objects, like lists or
-            class instances).
-    
-            -   A shallow copy constructs a new compound object and then (to the
-                extent possible) inserts *the same objects* into it that the
-                original contains.
-    
-            -   A deep copy constructs a new compound object and then, recursively,
-                inserts *copies* into it of the objects found in the original.
+        """ Perform uniform crossover on two waveform chromosomes.
 
         Returns:
             List[Chromosome]: Two new chromosomes descended from the given parents.
         """
+        # Order chromosomes by length, shorter first
         if parent1.length < parent2.length:
             tup = parent1, parent2
         else:
             tup = parent2, parent1
+        # Create children
         child1 = deepcopy(tup[0])
         child2 = deepcopy(tup[1])
+        # Choose indices from long parent to crossover with short parent
         indices_from_long_parent = np.sort(np.random.permutation(tup[1].length)[:tup[0].length])
+        # Perform uniform crossover with 50% chance:
         for locus in range(tup[0].length):
             if random.randint(0, 1) == 1:
                 child1.coordinates[locus] = tup[1].coordinates[indices_from_long_parent[locus]]
                 child2.coordinates[indices_from_long_parent[locus]] = tup[0].coordinates[locus]
+        # Sort coordinates in case they got messed up
         child1.sort_coordinates()
         child2.sort_coordinates()
+        # Perform frequency crossover
         freq_part_crossover = random.random()
         child1.freq = freq_part_crossover * tup[0].freq + (1 - freq_part_crossover) * tup[1].freq
         child2.freq = freq_part_crossover * tup[1].freq + (1 - freq_part_crossover) * tup[0].freq
@@ -101,8 +94,7 @@ class GeneticGlitch(ElitistGA, ScalingProportionateGA, FinishWhenSlowGA, BestChr
 
     def mutate(self, chromosome):
         """
-        with probability mutation_prob:
-        1) Change a random y value by a random value
+        with probability mutation_prob, change a random y value by a random value.
         2) add a random point
         Also always change id.
         :param chromosome:
@@ -110,9 +102,9 @@ class GeneticGlitch(ElitistGA, ScalingProportionateGA, FinishWhenSlowGA, BestChr
         """
         if random.random() < self.mutation_prob:
             ind = random.choice(range(chromosome.length))
-            amount_to_change = (- 0.5 + random.random()) * self.mutation_size
+            amount_to_change = np.random.randn() * self.mutation_size
             chromosome.coordinates[ind, 1] += amount_to_change
-        chromosome.id = uuid.uuid4()                        #  why ???, the initial id is unique already...
+        chromosome.id = uuid.uuid4()
         return chromosome
 
     def pre_generate(self):
@@ -152,4 +144,3 @@ if __name__ == "__main__":
     ax.legend(['Target waveform', 'Result waveform', 'Chromosome coordinates'])
     ax.grid()
     plt.show()
-

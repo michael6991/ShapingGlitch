@@ -42,7 +42,6 @@ class GeneticAlgorithm(object):
 
         # Basic GA parameters
         self.population_size = self.config.setdefault("population_size", 50)
-        self.mutation_prob = self.config.setdefault("mutation_prob", 0.20)
         self.crossover_prob = self.config.setdefault("crossover_prob", 0.80)
         self.max_iterations = self.config.setdefault("max_iterations", 100)
         self.remove_worst_size = self.config.setdefault("remove_worst_size", 3)

@@ -163,7 +163,7 @@ class ElitistGA(base.GeneticAlgorithm):
     def __init__(self, config={}):
         super(ElitistGA, self).__init__(config)
 
-        pct = self.config.setdefault("elitism_pct", 0.04)
+        pct = self.config.setdefault("elitism_pct", 0.02)
         self.elitism_pct = pct
         self.num_elites = int(math.ceil(pct * self.population_size))
         self.elites = []
