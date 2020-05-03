@@ -150,3 +150,4 @@ class PopulationLoggingGA(base.GeneticAlgorithm):
         population = "[%s]" % ", ".join(chromos)
         self.population_logger.info("%s: %i: %s", self.id, self.iteration,
                                     population)
+

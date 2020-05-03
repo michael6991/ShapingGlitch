@@ -21,6 +21,7 @@ strategies score all chromosomes.
 from __future__ import division
 
 import math
+import numpy as np
 
 from base import GeneticAlgorithm
 
@@ -70,11 +71,9 @@ class FittestInGenerationGA(FittestTriggerGA):
 
     def pre_generate(self):
         super(FittestInGenerationGA, self).pre_generate()
+        if self.iteration > 1:
+            self.best_scores.append(self.best_score[0])
         self.best_score = (0, None)
-
-    def post_generate(self):
-        super(FittestInGenerationGA, self).post_generate()
-        self.best_scores.append(self.best_score[0])
 
 
 class FinishWhenSlowGA(FittestInGenerationGA):
@@ -90,18 +89,18 @@ class FinishWhenSlowGA(FittestInGenerationGA):
 
     def __init__(self, config={}):
         super(FinishWhenSlowGA, self).__init__(config)
-        self.threshold = self.config.setdefault("threshold", 0.05)
-        self.lookback = self.config.setdefault("lookback", 5)
+        self.threshold = self.config.setdefault("threshold", 0.001)
+        self.lookback = self.config.setdefault("lookback", 10)
 
     def is_finished(self):
         exceeded_duration = self.iteration >= self.max_iterations
 
         if len(self.best_scores) > self.lookback:
-            first = self.best_scores[-self.lookback]
+            first = np.array(self.best_scores[-self.lookback: -1])
             last = self.best_scores[-1]
             gain = (last - first) / first
 
-            return gain <= self.threshold or exceeded_duration
+            return (gain <= self.threshold).all() or exceeded_duration
 
         else:
             return exceeded_duration

@@ -45,6 +45,7 @@ class GeneticAlgorithm(object):
         self.mutation_prob = self.config.setdefault("mutation_prob", 0.20)
         self.crossover_prob = self.config.setdefault("crossover_prob", 0.80)
         self.max_iterations = self.config.setdefault("max_iterations", 100)
+        self.remove_worst_size = self.config.setdefault("remove_worst_size", 3)
         if self.max_iterations <= 0:
             self.max_iterations = 1
 
@@ -63,6 +64,7 @@ class GeneticAlgorithm(object):
 
         This scores the fitness of each member of the population and returns
         the complete population as ``[(member, score)]``.
+        Also removes weakest chromosomes from gene pool.
 
         Raises:
             Exception: If the population is empty.
@@ -74,7 +76,7 @@ class GeneticAlgorithm(object):
         scored = [(member, self.fitness(member)) for member in self.population]
         scored.sort(key=lambda n: n[1])  # sort only according to the fitness score
         scored.reverse()  # make the member with highest score as first in list
-
+        scored = scored[:-self.remove_worst_size]
         return scored
 
     def solve(self):
@@ -103,11 +105,6 @@ class GeneticAlgorithm(object):
 
         This is the most basic stop condition for a GA.
         """
-
-        # should we add additional condition ?
-        # may be after a reallife experiment, we would decide.
-        # if self.best() >= CONVERGANCE_FITNESS_SCORE:
-
         return self.iteration >= self.max_iterations
 
     def generate(self):
@@ -125,6 +122,8 @@ class GeneticAlgorithm(object):
 
                 child = self.mutate(child)
                 self.next_generation.append(child)
+
+
 
     def fitness(self, chromosome):
         return self.score(chromosome)
