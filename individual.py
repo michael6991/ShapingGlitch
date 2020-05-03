@@ -46,23 +46,14 @@ class Chromosome():
 
     def sort_coordinates(self):
         """
-        Sort coordinates with ascending x values, remove duplicates if found and replace them with random points.
+        Sort coordinates with ascending x values.
+        Raises RuntimeError if duplicates in x coordinates found.
         :return:
         """
         self.coordinates = self.coordinates[self.coordinates[:, 0].argsort()]  # sort x values
         indices_to_remove = np.diff(self.coordinates[:, 0], axis=0) == 0
         if indices_to_remove.any():
-            print("NEED TO FIX")
-            self.coordinates = np.delete(self.coordinates, np.argwhere(indices_to_remove), axis=0)
-            # self.length = np.sum(np.logical_not(indices_to_remove)) + 1
-            # add random points
-            random_point = np.random.random([np.sum(indices_to_remove), 2])
-            random_point[:, 1] = -1 + 2 * random_point[:, 1]
-            self.coordinates = np.concatenate([self.coordinates, random_point], axis=0)
-            # chromosome.length += 1
-            self.coordinates = self.coordinates[self.coordinates[:, 0].argsort()]  # sort x values again
-        # if self.coordinates.size == 0:  # it has been crossovered to death
-        #     self.coordinates = self.calculate_random_coordinates(self.length)
+            raise RuntimeError("Duplicates of x coordinates found in chromosome.")
 
     def interpolate_coordinates(self, interp_method='quadratic'):
         """
@@ -141,6 +132,39 @@ class Chromosome():
         :param point: numpy array of size 1x2.
         """
         return (self.coordinates[:, 0] == point[0]).any()
+
+    def remove_point(self, ind):
+        """
+        remove point from chromosome.
+        :param ind:
+        :return:
+        """
+        if self.length > 1:
+            self.coordinates = np.concatenate([self.coordinates[:ind], self.coordinates[ind + 1:]], axis=0)
+            self.length -= 1
+
+    def add_random_point(self):
+        """
+        add random point to chromosome.
+        :return:
+        """
+        random_point = np.random.random([1, 2])
+        random_point[0, 1] = -1 + 2 * random_point[0, 1]
+        self.coordinates = np.concatenate([self.coordinates, random_point], axis=0)
+        self.length += 1
+        self.sort_coordinates()
+
+    def generate_new_id(self):
+        self.id = uuid.uuid4()
+
+    def make_copy(self):
+        """
+        return identical copy with different ID.
+        :return:
+        """
+        copy = deepcopy(self)
+        copy.generate_new_id()
+        return copy
 
 
 if __name__ == "__main__":

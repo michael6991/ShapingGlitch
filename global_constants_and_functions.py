@@ -9,7 +9,7 @@ import uuid
 # 65546 (64K) memory points or 16384 points. also represents the discrete time points:
 SAMPLE_NUM = 16384
 time_domain = range(0, SAMPLE_NUM)  # for matplotlib representation purposes
-N = 9  # number of shape structure points. must be >= 4
+N = 8  # number of shape structure points. must be >= 4
 
 # 12 bit DAC margin levels. These integers can also be user cinfigurable to match the
 # target's requirements, or experiment requirements.
@@ -27,13 +27,31 @@ MAX_DAC_VOL = 10
 MAX_FREQ = 25e6
 MIN_FREQ = 1e6  # not an actual limit but seems reasonable
 
+config = {}
+config.setdefault("population_size", 50)
+config.setdefault("crossover_prob", 0.8)
+config.setdefault("max_iterations", 1)
+config.setdefault("remove_worst_size", 3)
+config.setdefault("elitism_pct", 0.02)
+config.setdefault("log_best_chromosome", True)
+config.setdefault("best_chromosome_file", "best_chromosome_log.txt")
+config.setdefault("chromosome_length", N)
+config.setdefault("mutation_y_prob", 0.9)
+config.setdefault("mutation_y_size", 0.3)
+config.setdefault("mutation_reorder_prob", 0.05)
+config.setdefault("mutation_freq_prob", 0.2)
+config.setdefault("mutation_freq_size", MIN_FREQ)
+config.setdefault("mutation_add_or_remove_prob", 0.05)
+config.setdefault("threshold", 0.0001)
+config.setdefault("lookback", 20)
+
 
 def convert_int_to_comp2_binary_string(val: int, bits: int):
     newnum = val & ((1 << bits) - 1)
     return ("{0:0" + str(bits) + "b}").format(newnum)
 
 
-def convert_int_to_comp2_ascii(val: int, bytes: int):
-    len = bytes << 3  # bytes * 8
-    newnum = val & ((1 << len) - 1)
-    return newnum.to_bytes(bytes, byteorder='big')
+def convert_int_to_comp2_ascii(val: int, bytes_num: int):
+    len_bits = bytes_num << 3  # bytes * 8
+    newnum = val & ((1 << len_bits) - 1)
+    return newnum.to_bytes(bytes_num, byteorder='big')

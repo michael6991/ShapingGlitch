@@ -15,12 +15,12 @@ class GeneticGlitch(ElitistGA, ScalingProportionateGA, FinishWhenSlowGA, BestChr
         """
         super().__init__(config)
         self.chromosome_length_initial = self.config.setdefault("chromosome_length", N)
-        self.mutation_y_prob = self.config.setdefault("mutation_y_prob", 0.8)
-        self.mutation_y_size = self.config.setdefault("mutation_y_size", 0.5)
-        self.mutation_reorder_prob = self.config.setdefault("mutation_reorder_prob", 0.1)
+        self.mutation_y_prob = self.config.setdefault("mutation_y_prob", 0.9)
+        self.mutation_y_size = self.config.setdefault("mutation_y_size", 0.3)
+        self.mutation_reorder_prob = self.config.setdefault("mutation_reorder_prob", 0.05)
         self.mutation_freq_prob = self.config.setdefault("mutation_freq_prob", 0.2)
         self.mutation_freq_size = self.config.setdefault("mutation_freq_size", MIN_FREQ)
-
+        self.mutation_add_or_remove_prob = self.config.setdefault("mutation_add_or_remove_prob", 0.05)
 
     def chromosome_str(self, chromosome):
         return str(chromosome)
@@ -77,8 +77,8 @@ class GeneticGlitch(ElitistGA, ScalingProportionateGA, FinishWhenSlowGA, BestChr
         else:
             tup = parent2, parent1
         # Create children
-        child1 = deepcopy(tup[0])
-        child2 = deepcopy(tup[1])
+        child1 = tup[0].make_copy()
+        child2 = tup[1].make_copy()
         # Choose indices from long parent to crossover with short parent
         indices_from_long_parent = np.sort(np.random.permutation(tup[1].length)[:tup[0].length])
         # Perform uniform crossover with 50% chance, without adding points that are already in a chromosome:
@@ -99,38 +99,63 @@ class GeneticGlitch(ElitistGA, ScalingProportionateGA, FinishWhenSlowGA, BestChr
 
     def mutate(self, chromosome):
         """
-        with probability mutation_prob, change a random y value by a random value.
-        2) add a random point
-        Also always change id.
+        Possible mutations:
+        1) changing y value of random point
+        2) swapping 2 points'  y values.
+        3) removing or adding random point
+        4) adding noise to frequency
+        If a mutation occured, ID is changed.
         :param chromosome:
         :return:
         """
+        # random y coordinate mutation:
         if random.random() < self.mutation_y_prob:
             ind = random.choice(range(chromosome.length))
             amount_to_change = np.random.randn() * self.mutation_y_size
             chromosome.coordinates[ind, 1] += amount_to_change
-        chromosome.id = uuid.uuid4()
+            chromosome.generate_new_id()
+        # swap mutation
+        if random.random() < self.mutation_reorder_prob:
+            ind = random.choice(range(chromosome.length - 1))
+            tmp_to_swap = chromosome.coordinates[ind, 1]
+            chromosome.coordinates[ind, 1] = chromosome.coordinates[ind + 1, 1]
+            chromosome.coordinates[ind + 1, 1] = tmp_to_swap
+            chromosome.generate_new_id()
+        # remove or add point mutation
+        if random.random() < self.mutation_add_or_remove_prob:
+            # remove random point
+            if random.randint(0, 1) == 0:
+                ind = random.choice(range(chromosome.length))
+                chromosome.remove_point(ind)
+            # add random point
+            else:
+                chromosome.add_random_point()
+            chromosome.generate_new_id()
+        # frequency mutation
+        if random.random() < self.mutation_freq_prob:
+            chromosome.freq += self.mutation_freq_size * np.random.randn()
+            chromosome.generate_new_id()
         return chromosome
 
-    def pre_generate(self):
-        """
-        Before applying the GA selection, crossover, and mutation
-        methods on a certain generation, make sure that every chromosome
-        is unique and differs from others - by adding random noise to the
-        the attributes of the "similar" chromosome.
-        This function preserves "better" chromosomes with good solution attributes
-        and expands the solution space , so that GA won't converge around
-        a suboptimal solution.
-        """
-        super().pre_generate()
-        for chromosome in self.population:
-            chromosome.sort_coordinates()
-        for chromosome1 in self.population:
-            for chromosome2 in self.population:
-                if chromosome1.id != chromosome2.id and \
-                        chromosome1.length == chromosome2.length and \
-                        self.check_chromosomes_equality(chromosome1, chromosome2):
-                    chromosome2.add_noise()  # if we want to keep attributes of good solutions that were duplicated
+    # def pre_generate(self):
+    #     """
+    #     Before applying the GA selection, crossover, and mutation
+    #     methods on a certain generation, make sure that every chromosome
+    #     is unique and differs from others - by adding random noise to the
+    #     the attributes of the "similar" chromosome.
+    #     This function preserves "better" chromosomes with good solution attributes
+    #     and expands the solution space , so that GA won't converge around
+    #     a suboptimal solution.
+    #     """
+    #     super().pre_generate()
+    #     for chromosome in self.population:
+    #         chromosome.sort_coordinates()
+    #     for chromosome1 in self.population:
+    #         for chromosome2 in self.population:
+    #             if chromosome1.id != chromosome2.id and \
+    #                     chromosome1.length == chromosome2.length and \
+    #                     self.check_chromosomes_equality(chromosome1, chromosome2):
+    #                 chromosome2.add_noise()  # if we want to keep attributes of good solutions that were duplicated
 
     def best(self):
         """
@@ -144,7 +169,7 @@ class GeneticGlitch(ElitistGA, ScalingProportionateGA, FinishWhenSlowGA, BestChr
 if __name__ == "__main__":
     from score_chromosome import v_pulse_shape
 
-    g = GeneticGlitch()
+    g = GeneticGlitch(config)
     solution = g.solve()
     # plot
     x_samples, y_samples = solution.interpolate_coordinates()

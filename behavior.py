@@ -89,8 +89,8 @@ class FinishWhenSlowGA(FittestInGenerationGA):
 
     def __init__(self, config={}):
         super(FinishWhenSlowGA, self).__init__(config)
-        self.threshold = self.config.setdefault("threshold", 0.001)
-        self.lookback = self.config.setdefault("lookback", 10)
+        self.threshold = self.config.setdefault("threshold", 0.0001)
+        self.lookback = self.config.setdefault("lookback", 20)
 
     def is_finished(self):
         """
