@@ -28,8 +28,7 @@ def sim_score_chromosome(chromosome):
     """
     _, y_samples = chromosome.interpolate_coordinates()
     v_pulse_samples = v_pulse_shape(0.6, 0.6, 0.6, chromosome.num_samples)
-    return 1 / (np.linalg.norm(y_samples - v_pulse_samples) * np.linalg.norm(chromosome.freq - 20e6)
-                + np.finfo(float).eps)
+    return np.exp(-(np.mean((y_samples - v_pulse_samples)**2)/2 + ((chromosome.freq - 20e6)**2) / (MIN_FREQ**2)))
 
 
 def v_pulse_shape(width: float, depth: float, loc: float, length=SAMPLE_NUM):

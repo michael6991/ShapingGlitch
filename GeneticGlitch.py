@@ -1,12 +1,12 @@
 from global_constants_and_functions import *
 from selection import ElitistGA, ProportionateGA, ScalingProportionateGA
-from logger import FitnessLoggingGA, PopulationLoggingGA
+from logger import FitnessLoggingGA, PopulationLoggingGA, BestChromosomeLoggingGA
 from behavior import FinishWhenSlowGA
 from individual import Chromosome
 from score_chromosome import score_chromosome
 
 
-class GeneticGlitch(FitnessLoggingGA, PopulationLoggingGA, ElitistGA, ProportionateGA, FinishWhenSlowGA
+class GeneticGlitch(ElitistGA, ScalingProportionateGA, FinishWhenSlowGA, BestChromosomeLoggingGA
                     ):
     def __init__(self, config={}):
         """

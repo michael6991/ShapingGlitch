@@ -48,6 +48,7 @@ class GeneticAlgorithm(object):
         self.remove_worst_size = self.config.setdefault("remove_worst_size", 3)
         if self.max_iterations <= 0:
             self.max_iterations = 1
+        self.ranked = None
 
     def seed(self):
         """
@@ -73,11 +74,10 @@ class GeneticAlgorithm(object):
         if self.population is None:
             raise Exception("Cannot score and rank an empty population.")
 
-        scored = [(member, self.fitness(member)) for member in self.population]
-        scored.sort(key=lambda n: n[1])  # sort only according to the fitness score
-        scored.reverse()  # make the member with highest score as first in list
-        scored = scored[:-self.remove_worst_size]
-        return scored
+        self.ranked = [(member, self.fitness(member)) for member in self.population]
+        self.ranked.sort(key=lambda n: n[1])  # sort only according to the fitness score
+        self.ranked.reverse()  # make the member with highest score as first in list
+        self.ranked = self.ranked[:-self.remove_worst_size]
 
     def solve(self):
         """Run the GA until complete and return the best solution.

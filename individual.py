@@ -25,14 +25,14 @@ class Chromosome():
         self.id = uuid.uuid4()
 
     def __str__(self):
-        return "id = {}, coordinates = {}, freq = {:.4g}".format(self.id,
-                                                                 np.array2string(self.coordinates, precision=3),
-                                                                 self.freq)
+        return "id = {}\nfreq = {:.4g}\ncoordinates =\n{}\n".format(self.id,
+                                                                    self.freq,
+                                                                    np.array2string(self.coordinates, precision=3))
 
     def __repr__(self):
-        return "id = {}, coordinates = {}, freq = {:.4g}".format(self.id,
-                                                               np.array2string(self.coordinates, precision=3),
-                                                               self.freq)
+        return "id = {}, freq = {:.4g}, coordinates = {}".format(self.id,
+                                                                 self.freq,
+                                                                 np.array2string(self.coordinates, precision=3))
 
     @classmethod
     def calculate_random_coordinates(cls, length=N):
@@ -62,7 +62,6 @@ class Chromosome():
             self.coordinates = self.coordinates[self.coordinates[:, 0].argsort()]  # sort x values again
         # if self.coordinates.size == 0:  # it has been crossovered to death
         #     self.coordinates = self.calculate_random_coordinates(self.length)
-
 
     def interpolate_coordinates(self, interp_method='quadratic'):
         """
