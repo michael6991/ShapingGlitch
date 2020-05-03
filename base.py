@@ -122,8 +122,6 @@ class GeneticAlgorithm(object):
                 child = self.mutate(child)
                 self.next_generation.append(child)
 
-
-
     def fitness(self, chromosome):
         return self.score(chromosome)
 

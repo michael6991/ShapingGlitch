@@ -132,6 +132,14 @@ class GeneticGlitch(ElitistGA, ScalingProportionateGA, FinishWhenSlowGA, BestChr
                         self.check_chromosomes_equality(chromosome1, chromosome2):
                     chromosome2.add_noise()  # if we want to keep attributes of good solutions that were duplicated
 
+    def best(self):
+        """
+        Return best chromosome ever.
+        :return:
+        """
+        print("Returning best chromosome of iteration {}".format(self.iteration_of_best_fitness))
+        return self.best_chromosome_of_all
+
 
 if __name__ == "__main__":
     from score_chromosome import v_pulse_shape

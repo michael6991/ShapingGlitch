@@ -13,7 +13,7 @@ Contents
 from __future__ import division
 
 import logging
-
+import numpy as np
 import base
 
 
@@ -163,7 +163,8 @@ class BestChromosomeLoggingGA(base.GeneticAlgorithm):
         self.best_chromosome_logger.setLevel(logging.INFO)
         self.best_chromosome_logger.addHandler(logging.NullHandler())
         self.iteration_of_best_fitness = 0
-        self.best_fitness = 0
+        self.best_fitness = -np.inf
+        self.best_chromosome_of_all = None
 
         if "best_chromosome_file" in self.config:
             self.log_best_chromosome = True
@@ -188,8 +189,10 @@ class BestChromosomeLoggingGA(base.GeneticAlgorithm):
         if best_chromosome_tup[1] > self.best_fitness:
             self.iteration_of_best_fitness = iteration
             self.best_fitness = best_chromosome_tup[1]
+            self.best_chromosome_of_all = best_chromosome_tup[0]
         self.best_chromosome_logger.info("Iteration: {}, best chromosome so far is from iteration {}"
                                          .format(iteration, self.iteration_of_best_fitness))
         self.best_chromosome_logger.info("Chromosome: {}".format(best_chromosome_tup[0]))
         self.best_chromosome_logger.info("Fitness: {}".format(best_chromosome_tup[1]))
         self.best_chromosome_logger.info("-" * 20 + "\n")
+
