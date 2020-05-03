@@ -19,7 +19,8 @@ class GeneticGlitch(ElitistGA, ScalingProportionateGA, FinishWhenSlowGA, BestChr
         self.mutation_y_size = self.config.setdefault("mutation_y_size", 0.5)
         self.mutation_reorder_prob = self.config.setdefault("mutation_reorder_prob", 0.1)
         self.mutation_freq_prob = self.config.setdefault("mutation_freq_prob", 0.2)
-        self.mutation_freq_size = self.config.setdefault("mutation_freq_size", 0.2)
+        self.mutation_freq_size = self.config.setdefault("mutation_freq_size", MIN_FREQ)
+
 
     def chromosome_str(self, chromosome):
         return str(chromosome)
@@ -37,6 +38,8 @@ class GeneticGlitch(ElitistGA, ScalingProportionateGA, FinishWhenSlowGA, BestChr
 
     def crossover(self):
         """
+        Select 2 distinct parents to perform crossover on.
+        If no distinct parents can be chosen, create a random second parent.
         """
         parent1 = self.select()
         parent2 = parent1
@@ -78,11 +81,13 @@ class GeneticGlitch(ElitistGA, ScalingProportionateGA, FinishWhenSlowGA, BestChr
         child2 = deepcopy(tup[1])
         # Choose indices from long parent to crossover with short parent
         indices_from_long_parent = np.sort(np.random.permutation(tup[1].length)[:tup[0].length])
-        # Perform uniform crossover with 50% chance:
+        # Perform uniform crossover with 50% chance, without adding points that are already in a chromosome:
         for locus in range(tup[0].length):
             if random.randint(0, 1) == 1:
-                child1.coordinates[locus] = tup[1].coordinates[indices_from_long_parent[locus]]
-                child2.coordinates[indices_from_long_parent[locus]] = tup[0].coordinates[locus]
+                if not child1.is_point_in_chromosome(tup[1].coordinates[indices_from_long_parent[locus]]):
+                    child1.coordinates[locus] = tup[1].coordinates[indices_from_long_parent[locus]]
+                if not child2.is_point_in_chromosome(tup[0].coordinates[locus]):
+                    child2.coordinates[indices_from_long_parent[locus]] = tup[0].coordinates[locus]
         # Sort coordinates in case they got messed up
         child1.sort_coordinates()
         child2.sort_coordinates()
@@ -115,9 +120,7 @@ class GeneticGlitch(ElitistGA, ScalingProportionateGA, FinishWhenSlowGA, BestChr
         the attributes of the "similar" chromosome.
         This function preserves "better" chromosomes with good solution attributes
         and expands the solution space , so that GA won't converge around
-        a ot optimal solution.
-
-        Will overwrite pre_generate method in base class.
+        a suboptimal solution.
         """
         super().pre_generate()
         for chromosome in self.population:

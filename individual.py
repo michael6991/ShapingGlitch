@@ -46,7 +46,7 @@ class Chromosome():
 
     def sort_coordinates(self):
         """
-        Sort coordinates with ascending x values, remove duplicates and add other random points instead.
+        Sort coordinates with ascending x values, and remove duplicates and add other random points instead.
         :return:
         """
         self.coordinates = self.coordinates[self.coordinates[:, 0].argsort()]  # sort x values
@@ -126,6 +126,13 @@ class Chromosome():
         """
         self.coordinates[:, 1] += np.random.randn(self.length) * 0.25
         self.freq += np.random.randn() * MIN_FREQ
+
+    def is_point_in_chromosome(self, point) -> bool:
+        """
+        Checks whether a point exists in a chromosome sequence.
+        :param point: numpy array of size 1x2.
+        """
+        return any([(self.coordinates[i] == point).all() for i in range(self.coordinates.shape[0])])
 
 
 if __name__ == "__main__":
