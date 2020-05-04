@@ -14,7 +14,7 @@ class GeneticGlitch(ElitistGA, ScalingProportionateGA, FinishWhenSlowGA, BestChr
         :param config: configuration dictionary
         """
         super().__init__(config)
-        self.chromosome_length_initial = self.config.setdefault("chromosome_length", N)
+        self.chromosome_length_initial = self.config.setdefault("chromosome_length_initial", N)
         self.mutation_y_prob = self.config.setdefault("mutation_y_prob", 0.9)
         self.mutation_y_size = self.config.setdefault("mutation_y_size", 0.3)
         self.mutation_reorder_prob = self.config.setdefault("mutation_reorder_prob", 0.05)
@@ -37,25 +37,6 @@ class GeneticGlitch(ElitistGA, ScalingProportionateGA, FinishWhenSlowGA, BestChr
         :return:score
         """
         return score_chromosome(chromosome)
-
-    def generate(self):
-        """Create and assign a new generation as the population."""
-        while len(self.next_generation) < self.population_size - self.replace_worst_num:
-            if self.random.random() < self.crossover_prob:
-                children = self.crossover()
-            else:
-                children = [self.select() for _ in
-                            range(0, self.num_cx_children)]
-
-            for child in children:
-                if len(self.next_generation) >= self.population_size - self.replace_worst_num:
-                    break
-
-                child = self.mutate(child)
-                self.next_generation.append(child)
-
-        for _ in range(self.replace_worst_num):
-            self.next_generation.append(self.create())
 
     def crossover(self):
         """

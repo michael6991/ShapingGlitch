@@ -44,7 +44,9 @@ class GeneticAlgorithm(object):
         self.population_size = self.config.setdefault("population_size", 50)
         self.crossover_prob = self.config.setdefault("crossover_prob", 0.80)
         self.max_iterations = self.config.setdefault("max_iterations", 100)
-        self.replace_worst_num = self.config.setdefault("replace_worst_num", 3)
+        self.remove_worst_num = self.config.setdefault("remove_worst_num", 0)  # remove worst chromosomes from gene pool
+        self.add_random_num = self.config.setdefault("add_random_num", 0)  # add random chromosomes to population
+
         if self.max_iterations <= 0:
             self.max_iterations = 1
         self.ranked = None
@@ -76,7 +78,7 @@ class GeneticAlgorithm(object):
         self.ranked = [(member, self.fitness(member)) for member in self.population]
         self.ranked.sort(key=lambda n: n[1])  # sort only according to the fitness score
         self.ranked.reverse()  # make the member with highest score as first in list
-        self.ranked = self.ranked[:-self.replace_worst_num]
+        self.ranked = self.ranked[:-self.remove_worst_num]
 
     def solve(self):
         """Run the GA until complete and return the best solution.
@@ -108,7 +110,7 @@ class GeneticAlgorithm(object):
 
     def generate(self):
         """Create and assign a new generation as the population."""
-        while len(self.next_generation) < self.population_size:
+        while len(self.next_generation) < self.population_size - self.add_random_num:
             if self.random.random() < self.crossover_prob:
                 children = self.crossover()
             else:
@@ -116,11 +118,14 @@ class GeneticAlgorithm(object):
                             range(0, self.num_cx_children)]
 
             for child in children:
-                if len(self.next_generation) >= self.population_size:
+                if len(self.next_generation) >= self.population_size - self.add_random_num:
                     break
 
                 child = self.mutate(child)
                 self.next_generation.append(child)
+
+        for _ in range(self.add_random_num):
+            self.next_generation.append(self.create())
 
     def fitness(self, chromosome):
         return self.score(chromosome)

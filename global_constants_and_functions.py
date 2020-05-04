@@ -31,11 +31,13 @@ config = {}
 config.setdefault("population_size", 50)
 config.setdefault("crossover_prob", 0.8)
 config.setdefault("max_iterations", 100)
-config.setdefault("replace_worst_num", 2)
+config.setdefault("remove_worst_num", 1)
+config.setdefault("add_random_num", 2)  # It is recommended to have add_random_num > remove_worst_num,
+                                        # to make sure atleast one new agent is evaluated every generation
 config.setdefault("elitism_pct", 0.02)
 config.setdefault("log_best_chromosome", True)
 config.setdefault("best_chromosome_file", "best_chromosome_log.txt")
-config.setdefault("chromosome_length", N)
+config.setdefault("chromosome_length_initial", N)
 config.setdefault("mutation_y_prob", 0.1)
 config.setdefault("mutation_y_size", 0.25)
 config.setdefault("mutation_reorder_prob", 0.01)
@@ -44,7 +46,7 @@ config.setdefault("mutation_freq_size", MIN_FREQ)
 config.setdefault("mutation_add_or_remove_prob", 0.01)
 config.setdefault("mutation_random_parent_crossover_prob", 0.01)
 config.setdefault("threshold", 0.0001)
-config.setdefault("lookback", 100)
+config.setdefault("lookback", 80)
 
 
 def convert_int_to_comp2_binary_string(val: int, bits: int):
