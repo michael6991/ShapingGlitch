@@ -157,7 +157,6 @@ class BestChromosomeLoggingGA(base.GeneticAlgorithm):
         super(BestChromosomeLoggingGA, self).__init__(config)
         self.best_chromosome_file = self.config.setdefault("best_chromosome_file",
                                                            "best_chromosome_file.txt")
-
         self.log_best_chromosome = self.config.setdefault("log_best_chromosome", True)
         self.best_chromosome_logger = logging.getLogger("levis.best_chromosome")
         self.best_chromosome_logger.setLevel(logging.INFO)
@@ -166,8 +165,7 @@ class BestChromosomeLoggingGA(base.GeneticAlgorithm):
         self.best_fitness = -np.inf
         self.best_chromosome_of_all = None
 
-        if "best_chromosome_file" in self.config:
-            self.log_best_chromosome = True
+        if self.log_best_chromosome and "best_chromosome_file" in self.config:
             fhbest = logging.FileHandler(self.config["best_chromosome_file"], mode='w')
             logging.getLogger("levis.best_chromosome").addHandler(fhbest)
 
@@ -190,9 +188,10 @@ class BestChromosomeLoggingGA(base.GeneticAlgorithm):
             self.iteration_of_best_fitness = iteration
             self.best_fitness = best_chromosome_tup[1]
             self.best_chromosome_of_all = best_chromosome_tup[0]
-        self.best_chromosome_logger.info("Iteration: {}, best chromosome so far is from iteration {}"
-                                         .format(iteration, self.iteration_of_best_fitness))
-        self.best_chromosome_logger.info("Chromosome: {}".format(best_chromosome_tup[0]))
-        self.best_chromosome_logger.info("Fitness: {}".format(best_chromosome_tup[1]))
-        self.best_chromosome_logger.info("-" * 20 + "\n")
+        if self.log_best_chromosome and "best_chromosome_file" in self.config:
+            self.best_chromosome_logger.info("Iteration: {}, best chromosome so far is from iteration {}"
+                                             .format(iteration, self.iteration_of_best_fitness))
+            self.best_chromosome_logger.info("Chromosome: {}".format(best_chromosome_tup[0]))
+            self.best_chromosome_logger.info("Fitness: {}".format(best_chromosome_tup[1]))
+            self.best_chromosome_logger.info("-" * 20 + "\n")
 
