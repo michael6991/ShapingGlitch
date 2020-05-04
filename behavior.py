@@ -104,6 +104,8 @@ class FinishWhenSlowGA(FittestInGenerationGA):
             last = self.best_scores[-1]
             gain = (last - first)  # can also be divided by "first" to get gain as a ratio and not definite value
 
+            if (gain <= self.threshold).all():
+                print("Stopped due to slow progress")
             return (gain <= self.threshold).all() or exceeded_duration
 
         else:
