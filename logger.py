@@ -13,9 +13,8 @@ Contents
 from __future__ import division
 
 import logging
-import random
-
-from . import base
+import numpy as np
+import base
 
 
 # pylint: disable=abstract-method
@@ -53,9 +52,9 @@ class FitnessLoggingGA(base.GeneticAlgorithm):
 
     def __init__(self, config={}):
         super(FitnessLoggingGA, self).__init__(config)
+        self.stats_file = self.config.setdefault("stats_file", "stats_file.txt")  # Added by Matan
 
         self.stats_frequency = self.config.setdefault("stats_frequency", 1.0)
-
         self.log_fitness = self.config.setdefault("log_fitness", True)
         self.stats_logger = logging.getLogger("levis.stats")
         self.stats_logger.setLevel(logging.INFO)
@@ -83,7 +82,8 @@ class FitnessLoggingGA(base.GeneticAlgorithm):
 
     def log_stats(self):
         """Write generation statistics to a logger."""
-        scores = [t[1] for t in self.score_population()] #.sort(reverse=True)
+        self.score_population()
+        scores = [t[1] for t in self.ranked]  # .sort(reverse=True)
         if len(scores) == 0:
             stats = (0.0, 0.0, 0.0)
         else:
@@ -115,6 +115,8 @@ class PopulationLoggingGA(base.GeneticAlgorithm):
 
     def __init__(self, config={}):
         super(PopulationLoggingGA, self).__init__(config)
+        self.population_file = self.config.setdefault("population_file", "population_file.txt")  # Added by Matan
+
         self.log_pop = self.config.setdefault("log_population", False)
         self.population_logger = logging.getLogger("levis.population")
         self.population_logger.setLevel(logging.INFO)
@@ -148,3 +150,48 @@ class PopulationLoggingGA(base.GeneticAlgorithm):
         population = "[%s]" % ", ".join(chromos)
         self.population_logger.info("%s: %i: %s", self.id, self.iteration,
                                     population)
+
+
+class BestChromosomeLoggingGA(base.GeneticAlgorithm):
+    def __init__(self, config={}):
+        super(BestChromosomeLoggingGA, self).__init__(config)
+        self.best_chromosome_file = self.config.setdefault("best_chromosome_file",
+                                                           "best_chromosome_file.txt")
+        self.log_best_chromosome = self.config.setdefault("log_best_chromosome", True)
+        self.best_chromosome_logger = logging.getLogger("levis.best_chromosome")
+        self.best_chromosome_logger.setLevel(logging.INFO)
+        self.best_chromosome_logger.addHandler(logging.NullHandler())
+        self.iteration_of_best_fitness = 0
+        self.best_fitness = -np.inf
+        self.best_chromosome_of_all = None
+
+        if self.log_best_chromosome and "best_chromosome_file" in self.config:
+            fhbest = logging.FileHandler(self.config["best_chromosome_file"], mode='w')
+            logging.getLogger("levis.best_chromosome").addHandler(fhbest)
+
+    @classmethod
+    def arg_parser(cls):
+        parser = super(BestChromosomeLoggingGA, cls).arg_parser()
+        parser.add_argument("--best-chromosome-file", "-bcf",
+                            help="Path to a log of the best chromosome in each generation")
+        return parser
+
+    def score_population(self):
+        super().score_population()
+        # We want to mention the scoring of the first random population (in the pre-generate) as iteration 0
+        if self.scored is None:
+            iteration = 0
+        else:
+            iteration = self.iteration
+        best_chromosome_tup = self.ranked[0]
+        if best_chromosome_tup[1] > self.best_fitness:
+            self.iteration_of_best_fitness = iteration
+            self.best_fitness = best_chromosome_tup[1]
+            self.best_chromosome_of_all = best_chromosome_tup[0]
+        if self.log_best_chromosome and "best_chromosome_file" in self.config:
+            self.best_chromosome_logger.info("Iteration: {}, best chromosome so far is from iteration {}"
+                                             .format(iteration, self.iteration_of_best_fitness))
+            self.best_chromosome_logger.info("Chromosome: {}".format(best_chromosome_tup[0]))
+            self.best_chromosome_logger.info("Fitness: {}".format(best_chromosome_tup[1]))
+            self.best_chromosome_logger.info("-" * 20 + "\n")
+

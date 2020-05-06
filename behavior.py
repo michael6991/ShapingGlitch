@@ -21,8 +21,9 @@ strategies score all chromosomes.
 from __future__ import division
 
 import math
+import numpy as np
 
-from . import GeneticAlgorithm
+from base import GeneticAlgorithm
 
 
 class FittestTriggerGA(GeneticAlgorithm):
@@ -70,11 +71,9 @@ class FittestInGenerationGA(FittestTriggerGA):
 
     def pre_generate(self):
         super(FittestInGenerationGA, self).pre_generate()
+        if self.iteration > 1:
+            self.best_scores.append(self.best_score[0])
         self.best_score = (0, None)
-
-    def post_generate(self):
-        super(FittestInGenerationGA, self).post_generate()
-        self.best_scores.append(self.best_score[0])
 
 
 class FinishWhenSlowGA(FittestInGenerationGA):
@@ -90,18 +89,24 @@ class FinishWhenSlowGA(FittestInGenerationGA):
 
     def __init__(self, config={}):
         super(FinishWhenSlowGA, self).__init__(config)
-        self.threshold = self.config.setdefault("threshold", 0.05)
-        self.lookback = self.config.setdefault("lookback", 5)
+        self.threshold = self.config.setdefault("threshold", 0.0001)
+        self.lookback = self.config.setdefault("lookback", 20)
 
     def is_finished(self):
+        """
+        Checks whether progress has been made in the last iterations, and stops if gain didn't exceed certain threshold.
+        :return:
+        """
         exceeded_duration = self.iteration >= self.max_iterations
 
         if len(self.best_scores) > self.lookback:
-            first = self.best_scores[-self.lookback]
+            first = np.array(self.best_scores[-self.lookback: -1])
             last = self.best_scores[-1]
-            gain = (last - first) / first
+            gain = (last - first)  # can also be divided by "first" to get gain as a ratio and not definite value
 
-            return gain <= self.threshold or exceeded_duration
+            if (gain <= self.threshold).all():
+                print("Stopped due to slow progress")
+            return (gain <= self.threshold).all() or exceeded_duration
 
         else:
             return exceeded_duration

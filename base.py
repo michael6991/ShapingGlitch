@@ -6,13 +6,14 @@ Contents
 :GeneticAlgorithm: The base class from which all GA behaviors inherit.
 
 """
-#from builtins import str
-#from builtins import range
-#from builtins import object
+# from builtins import str
+# from builtins import range
+# from builtins import object
 
 import argparse
 import random
 import uuid
+
 
 # pylint: disable=too-many-instance-attributes
 class GeneticAlgorithm(object):
@@ -41,13 +42,15 @@ class GeneticAlgorithm(object):
 
         # Basic GA parameters
         self.population_size = self.config.setdefault("population_size", 50)
-        self.mutation_prob = self.config.setdefault("mutation_prob", 0.02)
         self.crossover_prob = self.config.setdefault("crossover_prob", 0.80)
-        self.max_iterations = self.config.setdefault("max_iterations", 50)
+        self.max_iterations = self.config.setdefault("max_iterations", 100)
+        self.remove_worst_num = self.config.setdefault("remove_worst_num", 0)  # remove worst chromosomes from gene pool
+        self.add_random_num = self.config.setdefault("add_random_num", 0)  # add random chromosomes to population
+
         if self.max_iterations <= 0:
             self.max_iterations = 1
+        self.ranked = None
 
-    
     def seed(self):
         """
         Create an initial seed population. the create method should be implemented
@@ -58,14 +61,12 @@ class GeneticAlgorithm(object):
             for _ in range(0, self.population_size):
                 self.population.append(self.create())
 
-
-    
-
     def score_population(self):
         """Return a scored and ranked copy of the population.
 
         This scores the fitness of each member of the population and returns
         the complete population as ``[(member, score)]``.
+        Also removes weakest chromosomes from gene pool.
 
         Raises:
             Exception: If the population is empty.
@@ -74,12 +75,10 @@ class GeneticAlgorithm(object):
         if self.population is None:
             raise Exception("Cannot score and rank an empty population.")
 
-        scored = [(member, self.fitness(member)) for member in self.population]
-        scored.sort(key=lambda n: n[1])  # sort only according to the fitness score
-        scored.reverse()  # make the member with highest score as first in list
-
-        return scored
-
+        self.ranked = [(member, self.fitness(member)) for member in self.population]
+        self.ranked.sort(key=lambda n: n[1])  # sort only according to the fitness score
+        self.ranked.reverse()  # make the member with highest score as first in list
+        self.ranked = self.ranked[:-self.remove_worst_num]
 
     def solve(self):
         """Run the GA until complete and return the best solution.
@@ -96,12 +95,11 @@ class GeneticAlgorithm(object):
                 self.pre_generate()
                 self.generate()
                 self.post_generate()
-
+                print("Iteration {} Finished".format(self.iteration))
         except KeyboardInterrupt:
             print("\nKeyboardInterrupt\n")
 
         return self.best()
-
 
     def is_finished(self):
         """Return true while there have been fewer iterations than the max.
@@ -110,10 +108,9 @@ class GeneticAlgorithm(object):
         """
         return self.iteration >= self.max_iterations
 
-
     def generate(self):
         """Create and assign a new generation as the population."""
-        while len(self.next_generation) < self.population_size:
+        while len(self.next_generation) < self.population_size - self.add_random_num:
             if self.random.random() < self.crossover_prob:
                 children = self.crossover()
             else:
@@ -121,27 +118,26 @@ class GeneticAlgorithm(object):
                             range(0, self.num_cx_children)]
 
             for child in children:
-                if len(self.next_generation) >= self.population_size:
+                if len(self.next_generation) >= self.population_size - self.add_random_num:
                     break
 
                 child = self.mutate(child)
                 self.next_generation.append(child)
 
+        for _ in range(self.add_random_num):
+            self.next_generation.append(self.create())
 
     def fitness(self, chromosome):
         return self.score(chromosome)
-
 
     def pre_generate(self):
         """Do anything necessary before creating the next generation."""
         pass
 
-
     def post_generate(self):
         """Do anything necessary after creating a generation."""
         self.population = list(self.next_generation)
         self.next_generation = []
-
 
     def best(self):
         """Returns the fittest member in the population of a GA.
@@ -151,11 +147,9 @@ class GeneticAlgorithm(object):
         """
         return self.score_population()[0][0]
 
-
     def mutate(self, chromosome):
         """Return a mutated chromosome."""
         raise NotImplementedError
-
 
     def select(self):
         """Return a chromosome from the current generation.

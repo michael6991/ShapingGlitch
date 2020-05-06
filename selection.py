@@ -36,7 +36,7 @@ Contents
 
 """
 from __future__ import division
-#from builtins import range
+# from builtins import range
 
 import math
 import random
@@ -58,23 +58,17 @@ class ProportionateGA(base.GeneticAlgorithm):
         the complete population as `[(member, score, weighted fitness)]`.
         """
 
-        ranked = super(ProportionateGA, self).score_population()
-        shares = float(sum([t[1] for t in ranked]))
+        super().score_population()
+        shares = float(sum([t[1] for t in self.ranked]))
 
         self.scored = []
         tally = 0
-        for tupl in ranked:
+        for tupl in self.ranked:
             if tupl[1] > 0:
                 tally = tally + tupl[1] / shares
             # chromosome, score, share range
             self.scored.append((tupl[0], tupl[1], tally))
 
-    def score_population(self):
-        """Return a scored and ranked copy of the population.
-
-        For efficiency, the scores calculated across each generation for
-        selection are reused."""
-        return self.scored
 
     def select(self):
         """Select a member of the population in a fitness-proportionate way."""
@@ -117,16 +111,16 @@ class ScalingProportionateGA(ProportionateGA):
         the complete population as `[(member, score, weighted fitness)]`.
         """
 
-        ranked = super(ProportionateGA, self).score_population()
-        scores = [t[1] for t in ranked if t[1] > 0]
+        super().score_population()
+        scores = [t[1] for t in self.ranked if t[1] > 0]
         worst = min(scores)
-        shares = float(sum([t[1] - worst for t in ranked]))
+        shares = float(sum([t[1] - worst for t in self.ranked]))
 
         self.scored = []
         tally = 0
-        for tupl in ranked:
+        for tupl in self.ranked:
             if tupl[1] > 0:
-                share = tupl[1] / shares
+                share = (tupl[1] - worst) / shares
                 tally = tally + share
                 # chromosome, score, share range
                 self.scored.append((tupl[0], tupl[1], tally))
@@ -148,7 +142,7 @@ class TournamentGA(base.GeneticAlgorithm):
         parser = super(TournamentGA, cls).get_parser()
         parser.add_argument("--tournament-size", type=int,
                             help="Number of chromosomes to sample in a"
-                            "tournament.")
+                                 "tournament.")
         return parser
 
     def select(self):
@@ -186,7 +180,7 @@ class ElitistGA(base.GeneticAlgorithm):
             else:
                 sentry = 0
 
-            if (score > sentry or len(self.elites) < self.num_elites):
+            if score > sentry or len(self.elites) < self.num_elites:
 
                 add = (score, chromosome)
                 pos = None
@@ -213,7 +207,7 @@ class ElitistGA(base.GeneticAlgorithm):
         parser = super(ElitistGA, cls).arg_parser()
         parser.add_argument("--elitism", "-e", type=float,
                             help="Percentage of the population to preserve in "
-                            "elitism (0.0-1.0)")
+                                 "elitism (0.0-1.0)")
         return parser
 
     def pre_generate(self):
